@@ -24,9 +24,39 @@
     .music-toggle-container.active .toggle-switch { background: #4caf50; }
     .music-toggle-container.active .toggle-switch::after { transform: translateX(24px); background: #fff; }
 
-    #loading-screen { z-index: 9999; flex-direction: column; background: #1a1a1a; }
-    .loading-img { width: min(60vw, 400px); animation: silly-wobble 1s ease-in-out infinite alternate; filter: drop-shadow(0 10px 10px rgba(0,0,0,0.5)); }
+    #loading-screen { z-index: 9999; flex-direction: column; background-color: #152431; background-size: cover; background-position: center; }
+    #loading-screen::before { content: ""; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(10,20,30,0.42), rgba(8,18,28,0.82)); }
+    .loading-card { position: relative; z-index: 1; width: min(90vw, 480px); padding: 28px 32px; display: flex; flex-direction: column; align-items: center; gap: 18px; background: rgba(15,35,48,0.78); border: 4px solid #fff; border-radius: 16px; box-shadow: 8px 8px 0 rgba(0,0,0,0.42); }
+    .loading-img { width: min(60vw, 360px); animation: silly-wobble 1s ease-in-out infinite alternate; filter: drop-shadow(0 10px 10px rgba(0,0,0,0.5)); }
+    .loading-caption { color: #fff; font: 30px 'VT323', monospace; letter-spacing: 2px; text-align: center; text-shadow: 2px 3px 0 #111; }
+    .loading-spinner { width: 30px; height: 30px; border: 4px solid rgba(255,255,255,0.35); border-top-color: #ffe36c; border-radius: 50%; animation: loading-spin 0.75s linear infinite; }
+    .loading-track { width: min(100%, 300px); height: 12px; overflow: hidden; border: 2px solid #101820; border-radius: 8px; background: rgba(0,0,0,0.45); }
+    .loading-track span { display: block; width: 42%; height: 100%; border-radius: inherit; background: #71d46e; animation: loading-sweep 1.2s ease-in-out infinite alternate; }
+    @keyframes loading-spin { to { transform: rotate(360deg); } }
+    @keyframes loading-sweep { from { transform: translateX(-8%); } to { transform: translateX(150%); } }
     @keyframes silly-wobble { 0% { transform: scale(1) rotate(-2deg); } 100% { transform: scale(1.05) rotate(2deg); } }
+    #guide-btn { position: fixed; top: 20px; right: 75px; z-index: 1001; width: 45px; height: 45px; border: 3px solid #000; border-radius: 8px; background: #fff4a8; color: #111; box-shadow: 3px 3px 0 rgba(0,0,0,0.25); cursor: pointer; font: 30px 'VT323', monospace; transition: transform 0.12s; }
+    #guide-btn:hover { transform: scale(1.06); }
+    #guide-overlay { position: fixed; inset: 0; z-index: 1010; display: flex; align-items: center; justify-content: center; padding: 20px; background: rgba(5,14,22,0.78); touch-action: pan-y; }
+    .guide-card { position: relative; width: min(720px, 96vw); max-height: 88vh; overflow-y: auto; overscroll-behavior: contain; padding: 24px; border: 5px solid #111; border-radius: 14px; background: #fffdf2; color: #17212b; box-shadow: 9px 9px 0 rgba(0,0,0,0.35); touch-action: pan-y; }
+    .guide-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; margin-bottom: 12px; }
+    .guide-kicker { color: #397d3b; font: 20px 'VT323', monospace; letter-spacing: 2px; }
+    .guide-title { font-size: clamp(26px, 5vw, 38px); line-height: 1.05; }
+    .guide-close { flex: 0 0 auto; width: 40px; height: 40px; border: 3px solid #111; border-radius: 7px; background: #f27b65; color: #111; cursor: pointer; font: 28px 'VT323', monospace; }
+    .guide-lead { margin: 0 0 16px; padding: 11px 14px; border: 3px solid #111; border-radius: 8px; background: #dff3d7; font-size: 18px; }
+    .guide-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .guide-section { padding: 12px; border: 2px solid #27313a; border-radius: 8px; background: #fff; }
+    .guide-section h3 { margin-bottom: 5px; color: #276343; font: 22px 'VT323', monospace; }
+    .guide-section p { font-size: 15px; line-height: 1.35; }
+    .guide-tip { margin: 14px 0 0; color: #694d13; font-size: 15px; font-weight: bold; line-height: 1.35; }
+    @media (max-width: 600px) {
+      #guide-overlay { padding: 10px; }
+      .guide-card { max-height: 90vh; padding: 16px; }
+      .guide-grid { grid-template-columns: 1fr; gap: 8px; }
+      .guide-section { padding: 9px 11px; }
+      .guide-section p { font-size: 14px; }
+      .loading-card { padding: 22px 18px; }
+    }
 
     .save-banner { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 1000; }
     .save-banner-inner { position: relative; width: min(92vw, 420px); }
@@ -189,11 +219,45 @@
   <div id="music-toggle" class="music-toggle-container" onclick="toggleMusic()">
     <div class="music-label" id="music-label">MUSIC?</div><div class="toggle-switch"></div>
   </div>
+  <button id="guide-btn" type="button" aria-label="How to play WARS" aria-controls="guide-overlay" aria-expanded="false">?</button>
+  <div id="guide-overlay" class="hidden" role="dialog" aria-modal="true" aria-labelledby="guide-title">
+    <div class="guide-card">
+      <div class="guide-header">
+        <div><div class="guide-kicker">QUICK START</div><h2 id="guide-title" class="guide-title">HOW TO PLAY WARS</h2></div>
+        <button id="guide-close" class="guide-close" type="button" aria-label="Close guide">X</button>
+      </div>
+      <p class="guide-lead">Break the enemy bed to win. Protect yours, then push across the bridge!</p>
+      <div class="guide-grid">
+        <section class="guide-section">
+          <h3>MOVE & EXPLORE</h3>
+          <p>Use WASD or arrow keys. On touch screens, steer with the left joystick. Cross the bridge to reach the middle and enemy island.</p>
+        </section>
+        <section class="guide-section">
+          <h3>FIGHT & BUILD</h3>
+          <p>Press Space or SWING to attack. Press F or PLACE to build with wood. Near the center chest, press F or SWING to open it.</p>
+        </section>
+        <section class="guide-section">
+          <h3>SHOP & SURVIVE</h3>
+          <p>Press E or SHOP to buy a sword, axe, or blocks. Watch your health: a knockout means a short respawn, then a brief spawn shield.</p>
+        </section>
+        <section class="guide-section">
+          <h3>CHOOSE YOUR GAME</h3>
+          <p>Pick 2D Stickmen or 3D Island Arena in the lobby or settings. Choose Web for bots, or host a room and share its code.</p>
+        </section>
+      </div>
+      <p class="guide-tip">TIP: You start with 500 tokens. The middle chest gives 100 more, and tokens are earned during a match.</p>
+    </div>
+  </div>
   
   <div id="wallpaper" class="wallpaper-bg"></div>
 
   <div id="loading-screen" class="screen hidden">
-    <div id="loading-fallback" class="loading-text-fallback" style="display:block; color:#fff; font-size:48px; font-family:VT323; margin-top:20px;">LOADING...</div>
+    <div class="loading-card">
+      <img class="loading-img" src="assets/title.png" alt="WARS">
+      <div class="loading-spinner" role="status" aria-label="Loading"></div>
+      <div id="loading-caption" class="loading-caption">LOADING YOUR ARENA...</div>
+      <div class="loading-track" aria-hidden="true"><span></span></div>
+    </div>
   </div>
 
   <div id="save-banner" class="save-banner hidden">
@@ -354,7 +418,7 @@
       </div>
       <div id="player-status">READY</div>
     </div>
-    <div id="game-hint">WASD / ARROWS MOVE · SPACE SWING · E SHOP · F PLACE / OPEN CHEST</div>
+    <div id="game-hint">WASD / ARROWS MOVE · SPACE SWING · E SHOP · F PLACE / OPEN CHEST · ? GUIDE</div>
 
     <div id="shop-menu" class="hidden">
       <img src="assets/shop.png" class="shop-header-img" alt="Shop">
@@ -416,11 +480,14 @@
     }
 
     const WALLPAPERS = ["assets/5114.png", "assets/2778.png", "assets/1765.png"];
-    document.getElementById("wallpaper").style.backgroundImage = `url('${WALLPAPERS[Math.floor(Math.random() * WALLPAPERS.length)]}')`;
+    function getRandomWallpaper() { return WALLPAPERS[Math.floor(Math.random() * WALLPAPERS.length)]; }
+    document.getElementById("wallpaper").style.backgroundImage = `url('${getRandomWallpaper()}')`;
 
     function loadScene(screenName, isMatchStart = false) {
       const loadScreen = document.getElementById("loading-screen");
       const time = isMatchStart ? 1500 : 500;
+      loadScreen.style.backgroundImage = `url('${getRandomWallpaper()}')`;
+      document.getElementById("loading-caption").textContent = isMatchStart ? "BUILDING YOUR ARENA..." : "LOADING YOUR NEXT SCREEN...";
       loadScreen.classList.remove("hidden");
       setTimeout(() => { loadScreen.classList.add("hidden"); showScreen(screenName); }, time);
     }
@@ -587,11 +654,32 @@
     let currentStyle = 'sweat';
     let currentCamera = 'first';
     let isSettingsOpen = false;
+    let isGuideOpen = false;
     
     function toggleSettings() { 
       isSettingsOpen = !isSettingsOpen; 
       document.getElementById("settings-menu").classList.toggle("hidden", !isSettingsOpen); 
     }
+
+    function toggleGuide(force) {
+      isGuideOpen = typeof force === "boolean" ? force : !isGuideOpen;
+      const overlay = document.getElementById("guide-overlay");
+      overlay.classList.toggle("hidden", !isGuideOpen);
+      document.getElementById("guide-btn").setAttribute("aria-expanded", String(isGuideOpen));
+      if (isGuideOpen) {
+        for (const key in keys) keys[key] = false;
+        resetJoystick();
+        document.getElementById("guide-close").focus();
+      } else {
+        document.getElementById("guide-btn").focus();
+      }
+    }
+
+    document.getElementById("guide-btn").onclick = () => toggleGuide();
+    document.getElementById("guide-close").onclick = () => toggleGuide(false);
+    document.getElementById("guide-overlay").addEventListener("click", event => {
+      if (event.target === event.currentTarget) toggleGuide(false);
+    });
     
     function switchTab(tab) {
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -955,9 +1043,12 @@
       isGameOver = false;
       isShopOpen = false;
       isSettingsOpen = false;
+      isGuideOpen = false;
       document.getElementById("game-over-screen").classList.add("hidden");
       document.getElementById("shop-menu").classList.add("hidden");
       document.getElementById("settings-menu").classList.add("hidden");
+      document.getElementById("guide-overlay").classList.add("hidden");
+      document.getElementById("guide-btn").setAttribute("aria-expanded", "false");
       document.getElementById("hud-tokens").textContent = gameState.tokens;
       document.getElementById("hud-blocks").textContent = "0";
       document.getElementById("own-bed-hp").textContent = gameState.bedHp;
@@ -985,7 +1076,7 @@
       lastMoveTime = 0;
       gameLoopId = requestAnimationFrame(gameLoop);
       tokenIntervalId = window.setInterval(() => {
-        if (!document.hidden && !isGameOver && document.getElementById("game").classList.contains("hidden") === false) {
+        if (!document.hidden && !isGuideOpen && !isGameOver && document.getElementById("game").classList.contains("hidden") === false) {
           gameState.tokens += 5;
           document.getElementById("hud-tokens").textContent = gameState.tokens;
         }
@@ -1033,7 +1124,7 @@
       const dt = Math.min((time - lastTime) / 1000, 0.1); lastTime = time;
       if (document.hidden) return;
       try {
-        if (!isShopOpen && !isSettingsOpen && !isGameOver) updateGame(dt);
+        if (!isShopOpen && !isSettingsOpen && !isGuideOpen && !isGameOver) updateGame(dt);
         if (time - lastMoveTime > 50) {
           if (isHost) {
             for (const id in connections) {
@@ -1503,9 +1594,17 @@
     window.addEventListener("keydown", e => {
       const key = e.key.toLowerCase();
       if ([" ", "arrowup", "arrowdown", "arrowleft", "arrowright"].includes(key)) e.preventDefault();
+      if (isGuideOpen) {
+        if ((key === "escape" || key === "?") && !e.repeat) toggleGuide(false);
+        return;
+      }
       keys[key] = true;
       if (key === "e" && !e.repeat) toggleShop();
-      if (key === "escape" && !e.repeat) toggleSettings();
+      if (key === "?" && !e.repeat) toggleGuide();
+      if (key === "escape" && !e.repeat) {
+        if (isGuideOpen) toggleGuide(false);
+        else toggleSettings();
+      }
     });
     window.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
     
