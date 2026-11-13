@@ -16,6 +16,8 @@ Music is loaded only when enabled and uses the compressed `assets/music.ogg` sou
 - Place a block or open the center chest: `F`
 - Choose **2D Stickmen** or **3D Island Arena** in the lobby or Gameplay settings
 
+Player health is displayed during matches. Your knockout triggers a short respawn and brief spawn shield. Matches and token income pause when the game tab is hidden.
+
 Touch devices have an on-screen joystick and action buttons.
 
 ## GitHub Pages

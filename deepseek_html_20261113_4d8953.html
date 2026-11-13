@@ -124,10 +124,19 @@
     #objective-hud { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); z-index: 100; display: flex; gap: 12px; align-items: center; padding: 8px 14px; border: 3px solid #142c38; border-radius: 10px; background: rgba(15,35,48,0.82); color: #fff; font: 20px 'VT323', monospace; text-shadow: 1px 2px 2px #000; white-space: nowrap; }
     .objective-bed { display: flex; align-items: center; gap: 7px; }
     .objective-heart { color: #ff6b65; }
+    #player-hud { position: absolute; top: 82px; left: 20px; z-index: 100; width: 220px; padding: 8px 12px; border: 2px solid #142c38; border-radius: 8px; background: rgba(15,35,48,0.82); color: #fff; font: 18px 'VT323', monospace; text-shadow: 1px 2px 2px #000; }
+    .player-hud-labels { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+    .health-track { height: 12px; overflow: hidden; border: 2px solid #142c38; border-radius: 6px; background: #482b2b; }
+    #player-hp-fill { width: 100%; height: 100%; background: #5fd36a; transition: width 0.12s ease, background-color 0.12s ease; }
+    #player-hud.low-health #player-hp-fill { background: #f04e46; }
+    #player-hud.respawning { border-color: #f0bf4c; }
+    #player-status { min-height: 16px; margin-top: 4px; color: #b7f4ba; font-size: 15px; }
+    #player-hud.respawning #player-status { color: #ffe08a; }
     #game-hint { position: absolute; bottom: 18px; left: 50%; transform: translateX(-50%); z-index: 20; padding: 7px 12px; border: 2px solid rgba(255,255,255,0.65); border-radius: 8px; background: rgba(12,27,40,0.66); color: #fff; font: 18px 'VT323', monospace; text-align: center; white-space: nowrap; pointer-events: none; }
     @media (max-width: 600px) {
       #objective-hud { top: 100px; font-size: 17px; }
-      #game-back { top: 162px; left: 20px; }
+      #player-hud { top: 158px; width: min(220px, calc(100vw - 40px)); }
+      #game-back { top: 236px; left: 20px; }
       #game-hint { bottom: 10px; max-width: 88vw; white-space: normal; font-size: 15px; }
     }
 
@@ -337,6 +346,13 @@
       <div class="objective-bed"><span>YOUR BED</span><span class="objective-heart">♥</span><span id="own-bed-hp">100</span></div>
       <div class="hud-divider"></div>
       <div class="objective-bed"><span>ENEMY BED</span><span class="objective-heart">♥</span><span id="enemy-bed-hp">100</span></div>
+    </div>
+    <div id="player-hud" aria-label="Player health">
+      <div class="player-hud-labels"><span>HEALTH</span><span id="player-hp-text">100 / 100</span></div>
+      <div class="health-track" role="progressbar" aria-label="Player health" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100">
+        <div id="player-hp-fill"></div>
+      </div>
+      <div id="player-status">READY</div>
     </div>
     <div id="game-hint">WASD / ARROWS MOVE · SPACE SWING · E SHOP · F PLACE / OPEN CHEST</div>
 
@@ -641,7 +657,13 @@
 
     const MAP = { spawn: { x: -15, z: 0 }, enemy: { x: 15, z: 0 }, mid: { x: 0, z: 0 } };
     const PLAYER_SPEED = 8;
+    const MAX_PLAYER_HP = 100;
     const ARENA_RADIUS = 10;
+    const playerHud = document.getElementById("player-hud");
+    const playerHpText = document.getElementById("player-hp-text");
+    const playerHpFill = document.getElementById("player-hp-fill");
+    const playerHealthBar = playerHud.querySelector("[role='progressbar']");
+    const playerStatus = document.getElementById("player-status");
 
     function getGeometry(key, create) {
       if (!sharedGeometry[key]) sharedGeometry[key] = create();
@@ -943,7 +965,8 @@
       playerMeshes = {};
       blockMeshes = [];
 
-      gameState.players[myPeerId] = { x: MAP.spawn.x, z: MAP.spawn.z, dir: "right", facingX: 1, facingZ: 0, isMe: true, skin: currentSkin, name: getMyName(), hp: 100, swingTimer: 0, hasSword: false, hasAxe: false, blocks: 0 };
+      gameState.players[myPeerId] = { x: MAP.spawn.x, z: MAP.spawn.z, dir: "right", facingX: 1, facingZ: 0, isMe: true, skin: currentSkin, name: getMyName(), hp: MAX_PLAYER_HP, respawnTimer: 0, invulnerabilityTimer: 0, swingTimer: 0, hasSword: false, hasAxe: false, blocks: 0 };
+      updatePlayerHud(gameState.players[myPeerId]);
 
       let bc = 0;
       for (const id in players) {
@@ -951,7 +974,7 @@
           const angle = (bc / Math.max(1, Object.keys(players).length)) * Math.PI * 2;
           const bx = MAP.enemy.x + Math.cos(angle) * 3;
           const bz = MAP.enemy.z + Math.sin(angle) * 3;
-          gameState.players[id] = { x: bx, z: bz, dir: "left", facingX: -1, facingZ: 0, isMe: false, skin: players[id].skin, name: players[id].username, hp: 100, swingTimer: 0, blocks: 0, isBot: true, vx: -1.5, vz: 0 };
+          gameState.players[id] = { x: bx, z: bz, dir: "left", facingX: -1, facingZ: 0, isMe: false, skin: players[id].skin, name: players[id].username, hp: MAX_PLAYER_HP, respawnTimer: 0, invulnerabilityTimer: 0, swingTimer: 0, blocks: 0, isBot: true, vx: -1.5, vz: 0 };
           bc++;
         }
       }
@@ -962,7 +985,7 @@
       lastMoveTime = 0;
       gameLoopId = requestAnimationFrame(gameLoop);
       tokenIntervalId = window.setInterval(() => {
-        if (!isGameOver && document.getElementById("game").classList.contains("hidden") === false) {
+        if (!document.hidden && !isGameOver && document.getElementById("game").classList.contains("hidden") === false) {
           gameState.tokens += 5;
           document.getElementById("hud-tokens").textContent = gameState.tokens;
         }
@@ -1008,6 +1031,7 @@
     function gameLoop(time) {
       gameLoopId = requestAnimationFrame(gameLoop);
       const dt = Math.min((time - lastTime) / 1000, 0.1); lastTime = time;
+      if (document.hidden) return;
       try {
         if (!isShopOpen && !isSettingsOpen && !isGameOver) updateGame(dt);
         if (time - lastMoveTime > 50) {
@@ -1026,35 +1050,66 @@
       } catch(e) { console.error(e); }
     }
 
+    function updatePlayerHud(player) {
+      const health = Math.max(0, Math.min(MAX_PLAYER_HP, player.hp));
+      playerHpText.textContent = `${health} / ${MAX_PLAYER_HP}`;
+      playerHpFill.style.width = `${health}%`;
+      playerHealthBar.setAttribute("aria-valuenow", health);
+      playerHud.classList.toggle("low-health", health <= 35);
+      playerHud.classList.toggle("respawning", player.respawnTimer > 0);
+      const nextStatus = player.respawnTimer > 0
+        ? `RESPAWNING · ${Math.max(0.1, player.respawnTimer).toFixed(1)}s`
+        : player.invulnerabilityTimer > 0
+          ? `SHIELDED · ${player.invulnerabilityTimer.toFixed(1)}s`
+          : "READY";
+      if (playerStatus.textContent !== nextStatus) playerStatus.textContent = nextStatus;
+    }
+
     function updateGame(dt) {
       const me = gameState.players[myPeerId]; if (!me) return;
+      me.invulnerabilityTimer = Math.max(0, (me.invulnerabilityTimer || 0) - dt);
+      if (me.respawnTimer > 0) {
+        me.respawnTimer = Math.max(0, me.respawnTimer - dt);
+        if (me.respawnTimer === 0) {
+          me.hp = MAX_PLAYER_HP;
+          me.x = MAP.spawn.x;
+          me.z = MAP.spawn.z;
+          me.facingX = 1;
+          me.facingZ = 0;
+          me.invulnerabilityTimer = 1.5;
+        }
+      }
+      updatePlayerHud(me);
+      const canAct = me.respawnTimer <= 0;
       let moveX = 0, moveZ = 0, isAttacking = false;
 
-      if (keys["w"] || keys["arrowup"]) moveZ -= 1;
-      if (keys["s"] || keys["arrowdown"]) moveZ += 1;
-      if (keys["a"] || keys["arrowleft"]) moveX -= 1;
-      if (keys["d"] || keys["arrowright"]) moveX += 1;
-      moveX += moveInput.x;
-      moveZ += moveInput.z;
-      if (keys[" "]) isAttacking = true;
-      if (keys["f"] && !keys._placeWasDown) { placeBlock3D(); keys._placeWasDown = true; }
-      if (!keys["f"]) keys._placeWasDown = false;
+      if (canAct) {
+        if (keys["w"] || keys["arrowup"]) moveZ -= 1;
+        if (keys["s"] || keys["arrowdown"]) moveZ += 1;
+        if (keys["a"] || keys["arrowleft"]) moveX -= 1;
+        if (keys["d"] || keys["arrowright"]) moveX += 1;
+        moveX += moveInput.x;
+        moveZ += moveInput.z;
+        if (keys[" "]) isAttacking = true;
+        if (keys["f"] && !keys._placeWasDown) { placeBlock3D(); keys._placeWasDown = true; }
+        if (!keys["f"]) keys._placeWasDown = false;
 
-      const magnitude = Math.hypot(moveX, moveZ);
-      if (magnitude > 1) { moveX /= magnitude; moveZ /= magnitude; }
-      const nextX = me.x + moveX * PLAYER_SPEED * dt;
-      const nextZ = me.z + moveZ * PLAYER_SPEED * dt;
-      if (isSafe3D(nextX, me.z)) me.x = nextX;
-      if (isSafe3D(me.x, nextZ)) me.z = nextZ;
-      if (moveX || moveZ) {
-        me.facingX = moveX;
-        me.facingZ = moveZ;
-        const mesh = playerMeshes[myPeerId];
-        if (mesh) mesh.rotation.y = Math.atan2(moveX, moveZ);
+        const magnitude = Math.hypot(moveX, moveZ);
+        if (magnitude > 1) { moveX /= magnitude; moveZ /= magnitude; }
+        const nextX = me.x + moveX * PLAYER_SPEED * dt;
+        const nextZ = me.z + moveZ * PLAYER_SPEED * dt;
+        if (isSafe3D(nextX, me.z)) me.x = nextX;
+        if (isSafe3D(me.x, nextZ)) me.z = nextZ;
+        if (moveX || moveZ) {
+          me.facingX = moveX;
+          me.facingZ = moveZ;
+          const mesh = playerMeshes[myPeerId];
+          if (mesh) mesh.rotation.y = Math.atan2(moveX, moveZ);
+        }
       }
 
       if (me.swingTimer > 0) me.swingTimer -= dt;
-      if (isAttacking && me.swingTimer <= 0) {
+      if (canAct && isAttacking && me.swingTimer <= 0) {
         me.swingTimer = me.hasSword ? 0.3 : 0.5;
         if(playerMeshes[myPeerId]) {
            let sword = playerMeshes[myPeerId].userData.sword;
@@ -1102,8 +1157,11 @@
                 }
                 if (playerDistance < 2 && p.swingTimer <= 0) {
                   p.swingTimer = 0.5;
-                  me.hp -= 10;
-                  if (me.hp <= 0) { me.hp = 100; me.x = MAP.spawn.x; me.z = MAP.spawn.z; }
+                  if (me.invulnerabilityTimer <= 0 && me.respawnTimer <= 0) {
+                    me.hp = Math.max(0, me.hp - 10);
+                    if (me.hp === 0) me.respawnTimer = 2.25;
+                    updatePlayerHud(me);
+                  }
                 }
             }
             if (bedDistance < 2.2 && p.swingTimer <= 0 && gameState.bedHp > 0) {
@@ -1117,7 +1175,7 @@
       }
       
       // Chest check
-      if (!gameState.chests[0].opened) {
+      if (canAct && !gameState.chests[0].opened) {
           if(Math.hypot(me.x - MAP.mid.x, me.z - MAP.mid.z) < 3) {
              if(keys["f"] || keys[" "]) {
                  gameState.chests[0].opened = true;
@@ -1162,6 +1220,9 @@
          const state = gameState.players[id];
          const mesh = playerMeshes[id];
          mesh.position.set(state.x, 0, state.z);
+         const respawnTimer = state.respawnTimer || 0;
+         const invulnerabilityTimer = state.invulnerabilityTimer || 0;
+         mesh.visible = respawnTimer <= 0 && (invulnerabilityTimer <= 0 || Math.floor(performance.now() / 90) % 2 === 0);
          const moving = id === myPeerId ? (moveInput.x || moveInput.z || keys["w"] || keys["a"] || keys["s"] || keys["d"] || keys["arrowup"] || keys["arrowdown"] || keys["arrowleft"] || keys["arrowright"]) : !!state.isBot;
          mesh.userData.step += dt * (moving ? 11 : 2);
          const swing = state.swingTimer > 0 ? Math.sin(Math.min(state.swingTimer / 0.18, 1) * Math.PI) * 0.45 : 0;
@@ -1355,6 +1416,7 @@
       const swing = player.swingTimer > 0 ? Math.sin(Math.min(player.swingTimer / 0.18, 1) * Math.PI) : 0;
 
       ctx2d.save();
+      ctx2d.globalAlpha = player.respawnTimer > 0 ? 0.3 : (player.invulnerabilityTimer > 0 && Math.floor(time / 90) % 2 === 0 ? 0.4 : 1);
       ctx2d.translate(p.x, p.y);
       ctx2d.lineCap = "round";
       ctx2d.lineJoin = "round";
@@ -1472,6 +1534,14 @@
       moveInput.z = 0;
       joystickStick.style.transform = "translate(-50%, -50%)";
     }
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) {
+        for (const key in keys) keys[key] = false;
+        resetJoystick();
+      } else {
+        lastTime = performance.now();
+      }
+    });
     joystickBase.addEventListener("pointerdown", event => {
       event.preventDefault();
       joystickBase.setPointerCapture(event.pointerId);
