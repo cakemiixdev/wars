@@ -104,11 +104,14 @@
     .mg-left { left: 5%; } .mg-right { right: 5%; }
 
     .lobby-panel { position: relative; width: min(94vw, 1000px); aspect-ratio: 1.5; background: #fff; border: 5px solid #000; border-radius: 20px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 10px 10px 0 rgba(0,0,0,0.2); }
-    .lobby-header { display: flex; justify-content: space-between; align-items: center; padding: 15px 25px; border-bottom: 5px solid #000; }
+    .lobby-header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; padding: 15px 25px; border-bottom: 5px solid #000; }
     .lobby-text { font-family: 'Fredoka One', cursive; font-size: 40px; color: #000; margin: 0; }
     .lobby-mode-select { display: flex; align-items: center; gap: 7px; font: bold 16px 'VT323', monospace; }
     .lobby-mode-btn { border: 3px solid #000; border-radius: 6px; background: #eee; padding: 7px 10px; font: bold 16px 'VT323', monospace; cursor: pointer; }
     .lobby-mode-btn.active { background: #4caf50; color: #fff; }
+    .lobby-map-control { display: flex; flex-direction: column; gap: 3px; min-width: 180px; color: #162d36; font: bold 15px 'VT323', monospace; }
+    .lobby-map-control select { width: 100%; padding: 5px 8px; border: 3px solid #111; border-radius: 6px; background: #fff; color: #111; font: bold 16px 'VT323', monospace; }
+    .lobby-map-description { max-width: 230px; color: #4a5b60; font: 13px 'VT323', monospace; line-height: 1.1; }
     .room-code-box { display: flex; align-items: center; gap: 10px; }
     .room-label { font-size: 20px; font-weight: bold; }
     .room-code-text { font-family: monospace; font-size: 20px; font-weight: bold; }
@@ -131,6 +134,18 @@
     .btn-start { background: #4caf50; color: #fff; }
     .btn-start:hover { background: #45a049; }
     .lobby-actions { display: flex; gap: 10px; }
+    @media (max-width: 700px) {
+      .lobby-panel { aspect-ratio: auto; height: 92vh; max-height: 760px; min-height: 420px; overflow-y: auto; touch-action: pan-y; }
+      .lobby-header { justify-content: center; padding: 10px; }
+      .lobby-header, .lobby-footer { flex: 0 0 auto; }
+      .lobby-text { font-size: 30px; }
+      .lobby-map-control { min-width: min(220px, 85vw); }
+      .lobby-map-description { max-width: 85vw; }
+      .arena { flex: 1 0 240px; min-height: 240px; }
+      .lobby-footer { flex-wrap: wrap; gap: 8px; justify-content: center; padding: 10px; }
+      .lobby-actions { flex-wrap: wrap; justify-content: center; gap: 6px; }
+      .btn-back, .btn-bot, .btn-join, .btn-start, .btn-ready { padding: 8px 11px; font-size: 15px; }
+    }
 
     .join-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 10; }
     .join-card { background: #fff; border: 4px solid #000; border-radius: 12px; padding: 24px; width: min(320px, 90%); display: flex; flex-direction: column; gap: 12px; text-align: center; }
@@ -152,6 +167,7 @@
     .block-icon { width: 30px; height: 30px; background: #8e44ad; border: 3px solid #000; }
     .hud-divider { width: 3px; height: 30px; background: #555; }
     #objective-hud { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); z-index: 100; display: flex; gap: 12px; align-items: center; padding: 8px 14px; border: 3px solid #142c38; border-radius: 10px; background: rgba(15,35,48,0.82); color: #fff; font: 20px 'VT323', monospace; text-shadow: 1px 2px 2px #000; white-space: nowrap; }
+    #arena-name-hud { position: absolute; top: 76px; right: 20px; z-index: 100; padding: 5px 10px; border: 2px solid #142c38; border-radius: 7px; background: rgba(15,35,48,0.78); color: #fff; font: 18px 'VT323', monospace; text-shadow: 1px 2px 2px #000; }
     .objective-bed { display: flex; align-items: center; gap: 7px; }
     .objective-heart { color: #ff6b65; }
     #player-hud { position: absolute; top: 82px; left: 20px; z-index: 100; width: 220px; padding: 8px 12px; border: 2px solid #142c38; border-radius: 8px; background: rgba(15,35,48,0.82); color: #fff; font: 18px 'VT323', monospace; text-shadow: 1px 2px 2px #000; }
@@ -165,6 +181,7 @@
     #game-hint { position: absolute; bottom: 18px; left: 50%; transform: translateX(-50%); z-index: 20; padding: 7px 12px; border: 2px solid rgba(255,255,255,0.65); border-radius: 8px; background: rgba(12,27,40,0.66); color: #fff; font: 18px 'VT323', monospace; text-align: center; white-space: nowrap; pointer-events: none; }
     @media (max-width: 600px) {
       #objective-hud { top: 100px; font-size: 17px; }
+      #arena-name-hud { top: 66px; right: 12px; font-size: 15px; }
       #player-hud { top: 158px; width: min(220px, calc(100vw - 40px)); }
       #game-back { top: 236px; left: 20px; }
       #game-hint { bottom: 10px; max-width: 88vw; white-space: normal; font-size: 15px; }
@@ -219,6 +236,7 @@
   <div id="music-toggle" class="music-toggle-container" onclick="toggleMusic()">
     <div class="music-label" id="music-label">MUSIC?</div><div class="toggle-switch"></div>
   </div>
+  <div id="arena-name-hud" aria-live="polite"></div>
   <button id="guide-btn" type="button" aria-label="How to play WARS" aria-controls="guide-overlay" aria-expanded="false">?</button>
   <div id="guide-overlay" class="hidden" role="dialog" aria-modal="true" aria-labelledby="guide-title">
     <div class="guide-card">
@@ -242,7 +260,7 @@
         </section>
         <section class="guide-section">
           <h3>CHOOSE YOUR GAME</h3>
-          <p>Pick 2D Stickmen or 3D Island Arena in the lobby or settings. Choose Web for bots, or host a room and share its code.</p>
+          <p>Pick 2D Stickmen or 3D Island Arena in the lobby or settings. In 3D, choose Sky Garden, Ember Rift, or Frostwood Peaks. Run across glowing rings for a speed boost. Choose Web for bots, or host a room and share its code.</p>
         </section>
       </div>
       <p class="guide-tip">TIP: You start with 500 tokens. The middle chest gives 100 more, and tokens are earned during a match.</p>
@@ -356,6 +374,15 @@
           <button id="lobby-mode-3d" class="lobby-mode-btn active" onclick="setGameMode('3d')">3D</button>
           <button id="lobby-mode-2d" class="lobby-mode-btn" onclick="setGameMode('2d')">2D STICKMEN</button>
         </div>
+        <label class="lobby-map-control" id="arena-map-control" for="arena-map-select">
+          <span>3D ARENA · HOST CHOOSES</span>
+          <select id="arena-map-select" aria-label="Choose a 3D arena">
+            <option value="sky-garden">Sky Garden</option>
+            <option value="ember-rift">Ember Rift</option>
+            <option value="frostwood">Frostwood Peaks</option>
+          </select>
+          <small class="lobby-map-description" id="arena-map-description">Green islands, wooden bridge, and leafy trees.</small>
+        </label>
         <div id="room-code-box" class="room-code-box">
           <span class="room-label">CODE:</span>
           <span id="room-code" class="room-code-text">......</span>
@@ -418,7 +445,7 @@
       </div>
       <div id="player-status">READY</div>
     </div>
-    <div id="game-hint">WASD / ARROWS MOVE · SPACE SWING · E SHOP · F PLACE / OPEN CHEST · ? GUIDE</div>
+    <div id="game-hint">WASD / ARROWS MOVE · SPACE SWING · E SHOP · F PLACE / OPEN CHEST · GLOWING PADS BOOST · ? GUIDE</div>
 
     <div id="shop-menu" class="hidden">
       <img src="assets/shop.png" class="shop-header-img" alt="Shop">
@@ -591,6 +618,10 @@
     }
     function updateLobbyControls() {
       const startBtn = document.getElementById("lobby-start"), readyBtn = document.getElementById("btn-ready");
+      const arenaControl = document.getElementById("arena-map-control");
+      const arenaSelect = document.getElementById("arena-map-select");
+      arenaControl.classList.toggle("hidden", gameMode === "2d");
+      arenaSelect.disabled = !isHost;
       if (isHost) {
         let allReady = true; for (const id in players) { if (id !== myPeerId && !players[id].isBot && !players[id].ready) allReady = false; }
         startBtn.textContent = "Start Game"; startBtn.disabled = false; startBtn.classList.toggle("ready-glow", allReady);
@@ -624,10 +655,16 @@
     function handleConnection(conn) {
       connections[conn.peer] = conn;
       conn.on("data", (data) => {
-        if (data.type === "join") { players[conn.peer] = { username: data.username, skin: data.skin, ready: false }; updateLobbyUI(); broadcastPlayers(); }
+        if (data.type === "join") {
+          players[conn.peer] = { username: data.username, skin: data.skin, ready: false };
+          try { conn.send({ type: "arenaMap", mapId: selectedArenaId }); }
+          catch (error) { console.error("Failed to send arena selection:", error); }
+          updateLobbyUI(); broadcastPlayers();
+        }
         if (data.type === "ready") { players[conn.peer].ready = data.ready; updateLobbyUI(); broadcastPlayers(); }
         if (data.type === "players") { players = data.players; hostId = data.hostId; updateLobbyUI(); }
-        if (data.type === "start") loadScene("game", true);
+        if (data.type === "arenaMap") setArenaMap(data.mapId, false);
+        if (data.type === "start") { if (data.mapId) setArenaMap(data.mapId, false); loadScene("game", true); }
         if (data.type === "gameState" && !isHost) {
           for (let id in data.state) { if (id !== myPeerId) { if (gameState.players[id]) Object.assign(gameState.players[id], data.state[id]); else gameState.players[id] = data.state[id]; } }
           gameState.bedHp = data.bedHp; gameState.enemyBedHp = data.enemyBedHp;
@@ -647,7 +684,7 @@
     document.getElementById("cancel-join").onclick = () => document.getElementById("join-overlay").classList.add("hidden");
     document.getElementById("join-btn").onclick = () => joinRoom(document.getElementById("join-code-input").value);
     document.getElementById("btn-ready").onclick = () => { if(!isHost){ amIReady=!amIReady; connections[hostId]?.send({type:"ready",ready:amIReady}); updateLobbyControls(); } };
-    document.getElementById("lobby-start").onclick = () => { if(isHost) { if(selectedPlatform==="server") for(const id in connections) try{connections[id].send({type:"start"});}catch(e){} loadScene("game", true); } };
+    document.getElementById("lobby-start").onclick = () => { if(isHost) { if(selectedPlatform==="server") for(const id in connections) try{connections[id].send({type:"start",mapId:selectedArenaId});}catch(e){console.error("Failed to send arena selection:",e);} loadScene("game", true); } };
     document.getElementById("game-back").onclick = () => { quitGame(); };
 
     // ===================== SETTINGS & VISUAL STYLES =====================
@@ -704,6 +741,7 @@
       document.getElementById("game-mode-2d").classList.toggle("active", mode === "2d");
       document.getElementById("lobby-mode-3d").classList.toggle("active", mode === "3d");
       document.getElementById("lobby-mode-2d").classList.toggle("active", mode === "2d");
+      document.getElementById("arena-map-control").classList.toggle("hidden", mode === "2d");
       const inGame = !document.getElementById("game").classList.contains("hidden");
       if (inGame) {
         setupGameView();
@@ -723,9 +761,10 @@
         renderer.toneMapping = style === "paper" ? THREE.NoToneMapping : THREE.ACESFilmicToneMapping;
         renderer.toneMappingExposure = style === "sweat" ? 0.9 : 1;
         if (scene) {
-          const sky = style === "paper" ? 0xf3e7cb : 0x8dd8ff;
+          const sky = style === "paper" ? 0xf3e7cb : ARENAS[matchArenaId].sky;
           scene.background.setHex(sky);
           scene.fog.color.setHex(sky);
+          renderer.setClearColor(sky, 1);
         }
       }
       if (canvas2d) onWindowResize();
@@ -743,15 +782,83 @@
     let gameState = { players: {}, bedHp: 100, enemyBedHp: 100, tokens: 500, blocks: [], particles: [], chests: [{x: 0, z: 0, opened: false}] };
     const keys = {};
 
-    const MAP = { spawn: { x: -15, z: 0 }, enemy: { x: 15, z: 0 }, mid: { x: 0, z: 0 } };
+    const ARENAS = {
+      "sky-garden": {
+        name: "Sky Garden",
+        description: "Green islands, wooden bridge, and leafy trees.",
+        layout: { spawn: { x: -15, z: 0 }, enemy: { x: 15, z: 0 }, mid: { x: 0, z: 0 }, islandRadius: 10, midRadius: 4.4, bridges: [{ z: 0, width: 4.2 }] },
+        sky: 0x8dd8ff, water: 0x39a9cf, waterEmissive: 0x000000,
+        grass: 0x5eaa3e, dirt: 0x76513b, rock: 0x87938b, grassStroke: 0x83c653,
+        bridge: 0xb5824a, bridgeDetail: 0x71472e, treeStyle: "leaf", propStyle: "cloud",
+        boost: 0xffe36c, boostCss: "#ffe36c", canvasSky: "#80d9ef", canvasIsland: "#52a647", canvasDirt: "#79513b", canvasStroke: "rgba(173, 224, 92, 0.58)", canvasTree: "#25854b", canvasBridge: "#71472e"
+      },
+      "ember-rift": {
+        name: "Ember Rift",
+        description: "Basalt islands over glowing lava, with magma spires.",
+        layout: { spawn: { x: -18, z: 0 }, enemy: { x: 18, z: 0 }, mid: { x: 0, z: 0 }, islandRadius: 12, midRadius: 5.2, bridges: [{ z: 0, width: 3.8 }] },
+        sky: 0x503044, water: 0x8d3023, waterEmissive: 0x571406,
+        grass: 0x514044, dirt: 0x34272f, rock: 0x76504c, grassStroke: 0xa9644d,
+        bridge: 0x30252d, bridgeDetail: 0xe8753f, treeStyle: "none", propStyle: "ember",
+        boost: 0xff7546, boostCss: "#ff7546", canvasSky: "#63394c", canvasIsland: "#574348", canvasDirt: "#382b31", canvasStroke: "rgba(232, 117, 63, 0.7)", canvasTree: "#8e4a3e", canvasBridge: "#30252d"
+      },
+      "frostwood": {
+        name: "Frostwood Peaks",
+        description: "Snowy pine islands linked by twin ice paths.",
+        layout: { spawn: { x: -16, z: 0 }, enemy: { x: 16, z: 0 }, mid: { x: 0, z: 0 }, islandRadius: 10.8, midRadius: 5.4, bridges: [{ z: -2, width: 2.5 }, { z: 2, width: 2.5 }] },
+        sky: 0xc9ecff, water: 0x6bb8d7, waterEmissive: 0x082238,
+        grass: 0xdcecf2, dirt: 0x71899a, rock: 0xa8c1cc, grassStroke: 0xb1e5f4,
+        bridge: 0x9eddeb, bridgeDetail: 0x5c99b1, treeStyle: "pine", propStyle: "frost",
+        boost: 0x73f2ff, boostCss: "#73f2ff", canvasSky: "#d0f1ff", canvasIsland: "#dcecf2", canvasDirt: "#71899a", canvasStroke: "rgba(115, 210, 235, 0.75)", canvasTree: "#39839a", canvasBridge: "#9eddeb"
+      }
+    };
+    let selectedArenaId = "sky-garden";
+    let matchArenaId = selectedArenaId;
+    let MAP = ARENAS[matchArenaId].layout;
     const PLAYER_SPEED = 8;
     const MAX_PLAYER_HP = 100;
-    const ARENA_RADIUS = 10;
     const playerHud = document.getElementById("player-hud");
     const playerHpText = document.getElementById("player-hp-text");
     const playerHpFill = document.getElementById("player-hp-fill");
     const playerHealthBar = playerHud.querySelector("[role='progressbar']");
     const playerStatus = document.getElementById("player-status");
+
+    function setArenaMap(mapId, broadcast = true) {
+      const arena = ARENAS[mapId];
+      if (!arena) {
+        console.warn("Ignored unknown arena:", mapId);
+        return false;
+      }
+      selectedArenaId = mapId;
+      document.getElementById("arena-map-select").value = mapId;
+      document.getElementById("arena-map-description").textContent = arena.description;
+      if (broadcast && isHost) {
+        for (const id in connections) {
+          try { connections[id].send({ type: "arenaMap", mapId }); }
+          catch (error) { console.error("Failed to sync arena selection:", error); }
+        }
+      }
+      return true;
+    }
+
+    document.getElementById("arena-map-select").onchange = event => setArenaMap(event.target.value);
+    setArenaMap(selectedArenaId, false);
+
+    function getBridgeBounds() {
+      return {
+        startX: MAP.spawn.x + MAP.islandRadius - 1,
+        endX: MAP.enemy.x - MAP.islandRadius + 1
+      };
+    }
+
+    function getBoostPads() {
+      const pads = [];
+      const offset = Math.max(2, MAP.islandRadius - 2.2);
+      for (const bridge of MAP.bridges) {
+        pads.push({ x: MAP.spawn.x + offset, z: bridge.z, direction: 1 });
+        pads.push({ x: MAP.enemy.x - offset, z: bridge.z, direction: -1 });
+      }
+      return pads;
+    }
 
     function getGeometry(key, create) {
       if (!sharedGeometry[key]) sharedGeometry[key] = create();
@@ -777,10 +884,10 @@
       try {
         const container = document.getElementById("canvas-container");
         container.innerHTML = "";
-        
+        const arena = ARENAS[matchArenaId];
         scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x8dd8ff);
-        scene.fog = new THREE.Fog(0x8dd8ff, 55, 125);
+        scene.background = new THREE.Color(arena.sky);
+        scene.fog = new THREE.Fog(arena.sky, 55, 125);
 
         camera = new THREE.PerspectiveCamera(48, window.innerWidth / window.innerHeight, 0.1, 180);
         
@@ -794,7 +901,7 @@
           depth: true
         });
         renderer.setPixelRatio(pixelRatio);
-        renderer.setClearColor(0x8dd8ff, 1);
+        renderer.setClearColor(arena.sky, 1);
         renderer.outputEncoding = THREE.sRGBEncoding;
         renderer.toneMapping = currentStyle === "paper" ? THREE.NoToneMapping : THREE.ACESFilmicToneMapping;
         renderer.toneMappingExposure = currentStyle === "sweat" ? 0.9 : 1;
@@ -811,16 +918,18 @@
 
         const water = new THREE.Mesh(
           getGeometry("water", () => new THREE.PlaneGeometry(240, 240)),
-          getMaterial("water", 0x39a9cf, { roughness: 0.32, metalness: 0.08 })
+          getMaterial(`water:${matchArenaId}`, arena.water, { roughness: 0.32, metalness: 0.08, emissive: arena.waterEmissive, emissiveIntensity: 0.5 })
         );
         water.rotation.x = -Math.PI / 2;
         water.position.y = -7.7;
         scene.add(water);
 
-        createIsland(MAP.spawn.x, MAP.spawn.z, 10, 0x5EAA3E);
-        createIsland(MAP.enemy.x, MAP.enemy.z, 10, 0x5EAA3E);
-        createIsland(MAP.mid.x, MAP.mid.z, 4.4, 0x5EAA3E);
-        createBridge(MAP.spawn.x + ARENA_RADIUS - 0.5, 0, MAP.enemy.x - ARENA_RADIUS + 0.5);
+        createIsland(MAP.spawn.x, MAP.spawn.z, MAP.islandRadius);
+        createIsland(MAP.enemy.x, MAP.enemy.z, MAP.islandRadius);
+        createIsland(MAP.mid.x, MAP.mid.z, MAP.midRadius);
+        for (const bridge of MAP.bridges) createBridge(bridge);
+        createBoostPads(arena);
+        createArenaDecor(arena);
         createBed(MAP.spawn.x + 5.5, MAP.spawn.z, 0x3e9ee8);
         createBed(MAP.enemy.x - 5.5, MAP.enemy.z, 0xec564c);
         createChest(MAP.mid.x, MAP.mid.z);
@@ -834,30 +943,31 @@
       }
     }
 
-    function createIsland(cx, cz, radius, color) {
+    function createIsland(cx, cz, radius) {
+      const arena = ARENAS[matchArenaId];
       const grass = new THREE.Mesh(
         getGeometry(`grass:${radius}`, () => new THREE.CylinderGeometry(radius, radius * 0.98, 1, 48)),
-        getMaterial(`grass:${color}`, color)
+        getMaterial(`grass:${matchArenaId}:${radius}`, arena.grass)
       );
       grass.position.set(cx, 0, cz);
       scene.add(grass);
 
       const dirt = new THREE.Mesh(
         getGeometry(`dirt:${radius}`, () => new THREE.CylinderGeometry(radius - 0.6, radius * 0.45, 8, 32)),
-        getMaterial("dirt", 0x76513b)
+        getMaterial(`dirt:${matchArenaId}`, arena.dirt)
       );
       dirt.position.set(cx, -4.5, cz);
       scene.add(dirt);
       
       const rocks = new THREE.Mesh(
         getGeometry(`rock:${radius}`, () => new THREE.CylinderGeometry(radius * 0.42, radius * 0.2, 3.2, 7)),
-        getMaterial("rock", 0x87938b)
+        getMaterial(`rock:${matchArenaId}`, arena.rock)
       );
       rocks.position.set(cx, -1.7, cz);
       scene.add(rocks);
       createPaintedGrass(cx, cz, radius);
 
-      if (radius > 5) {
+      if (radius > 5 && arena.treeStyle !== "none") {
         const treeCount = radius > 15 ? 11 : 5;
         for (let i = 0; i < treeCount; i++) {
           const angle = (i / treeCount) * Math.PI * 2 + (cx * 0.17);
@@ -868,10 +978,11 @@
     }
 
     function createPaintedGrass(cx, cz, radius) {
+      const arena = ARENAS[matchArenaId];
       const count = radius > 8 ? 12 : 5;
       const patches = new THREE.InstancedMesh(
         getGeometry("paint-stroke", () => new THREE.BoxGeometry(0.72, 0.025, 0.22)),
-        getMaterial("paint-stroke", 0x83c653),
+        getMaterial(`paint-stroke:${matchArenaId}`, arena.grassStroke),
         count
       );
       const transform = new THREE.Object3D();
@@ -887,24 +998,131 @@
     }
 
     function createTree(x, y, z) {
+      const arena = ARENAS[matchArenaId];
       const tree = new THREE.Group();
-      addBox(0, 1, 0, 0.55, 2, 0.55, getMaterial("trunk", 0x68442d), tree);
-      const crown = new THREE.Mesh(
-        getGeometry("crown", () => new THREE.IcosahedronGeometry(1.35, 1)),
-        getMaterial("leaves", 0x25854b)
-      );
-      crown.position.y = 2.85;
-      tree.add(crown);
+      addBox(0, 1, 0, 0.55, 2, 0.55, getMaterial(`trunk:${matchArenaId}`, matchArenaId === "frostwood" ? 0x5a4a45 : 0x68442d), tree);
+      if (arena.treeStyle === "pine") {
+        for (let tier = 0; tier < 3; tier++) {
+          const crown = new THREE.Mesh(
+            getGeometry(`pine-crown:${tier}`, () => new THREE.ConeGeometry(1.18 - tier * 0.2, 1.65, 7)),
+            getMaterial(`pine-leaves:${matchArenaId}`, arena.canvasTree === "#39839a" ? 0x39839a : 0x25854b)
+          );
+          crown.position.y = 2.1 + tier * 0.72;
+          tree.add(crown);
+        }
+      } else {
+        const crown = new THREE.Mesh(
+          getGeometry("crown", () => new THREE.IcosahedronGeometry(1.35, 1)),
+          getMaterial(`leaves:${matchArenaId}`, 0x25854b)
+        );
+        crown.position.y = 2.85;
+        tree.add(crown);
+      }
       tree.position.set(x, y, z);
       tree.rotation.y = Math.sin(x * 13 + z * 7) * 0.2;
       scene.add(tree);
     }
 
-    function createBridge(startX, z, endX) {
+    function createBridge(bridge) {
+      const arena = ARENAS[matchArenaId];
+      const bounds = getBridgeBounds();
+      const startX = bounds.startX;
+      const endX = bounds.endX;
+      const z = bridge.z;
+      const width = bridge.width;
       const length = endX - startX;
-      addBox(startX + length / 2, -0.26, z, length, 0.28, 4.2, getMaterial("bridge", 0xb5824a));
+      addBox(startX + length / 2, 0.36, z, length, 0.28, width, getMaterial(`bridge:${matchArenaId}`, arena.bridge));
       for (let x = startX + 1; x < endX; x += 2) {
-        addBox(x, -0.04, z, 0.18, 0.12, 4.35, getMaterial("bridge-rail", 0x71472e));
+        addBox(x, 0.54, z, 0.18, 0.12, width + 0.08, getMaterial(`bridge-detail:${matchArenaId}`, arena.bridgeDetail));
+      }
+    }
+
+    function createBoostPads(arena) {
+      const baseMaterial = getMaterial(`boost-base:${matchArenaId}`, 0x20323b);
+      const ringMaterial = getMaterial(`boost-ring:${matchArenaId}`, arena.boost, { emissive: arena.boost, emissiveIntensity: 0.8 });
+      const ringGeometry = getGeometry("boost-ring", () => new THREE.TorusGeometry(0.78, 0.08, 8, 24));
+      for (const pad of getBoostPads()) {
+        const base = new THREE.Mesh(getGeometry("boost-pad-base", () => new THREE.CylinderGeometry(0.98, 1.05, 0.12, 16)), baseMaterial);
+        base.position.set(pad.x, 0.56, pad.z);
+        scene.add(base);
+        const ring = new THREE.Mesh(ringGeometry, ringMaterial);
+        ring.rotation.x = Math.PI / 2;
+        ring.position.set(pad.x, 0.64, pad.z);
+        scene.add(ring);
+        const arrowMaterial = ringMaterial;
+        const shaft = addBox(pad.x + pad.direction * 0.02, 0.65, pad.z, 0.52, 0.06, 0.11, arrowMaterial);
+        const headTop = addBox(pad.x + pad.direction * 0.25, 0.65, pad.z - 0.19, 0.3, 0.06, 0.1, arrowMaterial);
+        const headBottom = addBox(pad.x + pad.direction * 0.25, 0.65, pad.z + 0.19, 0.3, 0.06, 0.1, arrowMaterial);
+        shaft.rotation.y = pad.direction > 0 ? 0 : Math.PI;
+        headTop.rotation.y = pad.direction > 0 ? -0.55 : 0.55;
+        headBottom.rotation.y = pad.direction > 0 ? 0.55 : -0.55;
+      }
+    }
+
+    function createCrystal(x, z, height, color) {
+      const crystal = new THREE.Group();
+      const material = getMaterial(`crystal:${matchArenaId}`, color, { emissive: color, emissiveIntensity: 0.22, roughness: 0.28 });
+      const main = new THREE.Mesh(
+        getGeometry(`crystal:${height}`, () => new THREE.ConeGeometry(0.55, height, 6)),
+        material
+      );
+      main.position.y = height / 2;
+      crystal.add(main);
+      const shard = new THREE.Mesh(
+        getGeometry(`crystal-shard:${height}`, () => new THREE.ConeGeometry(0.3, height * 0.66, 5)),
+        material
+      );
+      shard.position.set(0.42, height * 0.32, 0.2);
+      shard.rotation.z = -0.2;
+      crystal.add(shard);
+      crystal.position.set(x, 0.5, z);
+      scene.add(crystal);
+    }
+
+    function createSpire(x, z, height) {
+      const spire = new THREE.Mesh(
+        getGeometry(`spire:${height}`, () => new THREE.ConeGeometry(0.8, height, 6)),
+        getMaterial(`spire:${matchArenaId}`, 0x40313a)
+      );
+      spire.position.set(x, 0.5 + height / 2, z);
+      spire.rotation.y = x * 0.17 + z * 0.11;
+      scene.add(spire);
+    }
+
+    function createArenaDecor(arena) {
+      if (arena.propStyle === "ember") {
+        const lava = getMaterial("lava-fissure", 0xff6138, { emissive: 0xff2800, emissiveIntensity: 1.1 });
+        for (const z of [-6.5, 6.5]) {
+          addBox(0, -7.58, z, 15, 0.08, 0.22, lava);
+          addBox(-4, -7.56, z + Math.sign(z) * 0.5, 5, 0.08, 0.14, lava);
+          addBox(5, -7.56, z - Math.sign(z) * 0.5, 4, 0.08, 0.14, lava);
+        }
+        for (const island of [MAP.spawn, MAP.enemy]) {
+          createSpire(island.x, -6.8, 3.2);
+          createSpire(island.x, 6.8, 2.4);
+        }
+        createSpire(-2.2, -3.2, 1.7);
+        createSpire(2.2, 3.2, 1.7);
+      } else if (arena.propStyle === "frost") {
+        for (const island of [MAP.spawn, MAP.enemy]) {
+          createCrystal(island.x + (island.x < 0 ? 6.8 : -6.8), -5.2, 2.4, 0x9af5ff);
+          createCrystal(island.x + (island.x < 0 ? 6.8 : -6.8), 5.2, 1.7, 0x72d9f0);
+        }
+        createCrystal(-2.8, -3.3, 1.4, 0x9af5ff);
+        createCrystal(2.8, 3.3, 1.9, 0x72d9f0);
+      } else {
+        for (const cloud of [{ x: -7, z: 8 }, { x: 7, z: -8 }, { x: 0, z: 12 }]) {
+          const group = new THREE.Group();
+          const material = getMaterial("sky-cloud", 0xe9f7ff, { transparent: true, opacity: 0.82 });
+          for (const puff of [{ x: 0, y: 0, s: 1 }, { x: 0.9, y: 0.15, s: 0.72 }, { x: -0.85, y: 0.05, s: 0.66 }]) {
+            const mesh = new THREE.Mesh(getGeometry("cloud-puff", () => new THREE.SphereGeometry(1, 10, 7)), material);
+            mesh.position.set(puff.x, puff.y, 0);
+            mesh.scale.set(1.3 * puff.s, 0.55 * puff.s, 0.75 * puff.s);
+            group.add(mesh);
+          }
+          group.position.set(cloud.x, 5.5, cloud.z);
+          scene.add(group);
+        }
       }
     }
 
@@ -914,7 +1132,7 @@
       addBox(0, 0.58, 0, 3, 0.42, 1.65, getMaterial(`bed-cover:${color}`, color), bed);
       addBox(-1.05, 0.86, 0, 0.72, 0.18, 1.55, getMaterial("bed-pillow", 0xf6f0dc), bed);
       addBox(-1.62, 0.42, 0, 0.16, 0.65, 1.95, getMaterial("bed-post", 0x9c6a43), bed);
-      bed.position.set(x, 0, z);
+      bed.position.set(x, 0.5, z);
       scene.add(bed);
     }
 
@@ -923,43 +1141,88 @@
       addBox(0, 0.5, 0, 1.5, 1, 1.2, getMaterial("chest", 0x9b5429), chestMesh);
       addBox(0, 1.08, 0, 1.58, 0.22, 1.28, getMaterial("chest-lid", 0xe7a542), chestMesh);
       addBox(0, 0.72, 0.62, 0.22, 0.34, 0.05, getMaterial("chest-lock", 0xffdf70), chestMesh);
-      chestMesh.position.set(x, 0, z);
+      chestMesh.position.set(x, 0.5, z);
       scene.add(chestMesh);
     }
 
     function create3DPlayer(id, skinId, name, isMe) {
       const group = new THREE.Group();
-      
       const colors = { red: 0xe74c3c, green: 0x2ecc71, yellow: 0xf1c40f, pink: 0xfd79a8, cyan: 0x00cec9, orange: 0xe67e22, default: 0x95a5a6, blue: 0x3498db };
       const mainColor = colors[skinId] || colors.blue;
+      const shirt = getMaterial(`stick-shirt:${skinId}`, mainColor);
+      const skin = getMaterial("stick-skin", 0xffc99e);
+      const trousers = getMaterial("stick-trousers", 0x33465b);
+      const boots = getMaterial("stick-boots", 0x25313c);
+      const dark = getMaterial("stick-face", 0x19232b);
       const body = new THREE.Group();
       group.add(body);
-      const torso = addBox(0, 0.6, 0, 0.9, 1.15, 0.6, getMaterial(`player:${mainColor}`, mainColor), body);
-      const head = new THREE.Mesh(
-        getGeometry("player-head", () => new THREE.BoxGeometry(0.78, 0.78, 0.78)),
-        getMaterial("player-skin", 0xffcc99)
+      const torso = new THREE.Mesh(
+        getGeometry("stick-torso", () => new THREE.CylinderGeometry(0.19, 0.28, 0.82, 10)),
+        shirt
       );
-      head.position.y = 1.55;
+      torso.position.y = 1.1;
+      body.add(torso);
+      const neck = new THREE.Mesh(
+        getGeometry("stick-neck", () => new THREE.CylinderGeometry(0.1, 0.12, 0.18, 8)),
+        skin
+      );
+      neck.position.y = 1.6;
+      body.add(neck);
+      const head = new THREE.Mesh(
+        getGeometry("stick-head", () => new THREE.SphereGeometry(0.34, 14, 12)),
+        skin
+      );
+      head.position.y = 1.88;
       body.add(head);
-      addBox(-0.3, -0.4, 0, 0.34, 0.8, 0.4, getMaterial("player-pants", 0x33465b), body);
-      addBox(0.3, -0.4, 0, 0.34, 0.8, 0.4, sharedMaterials["player-pants"], body);
-      const leftArm = addBox(-0.58, 0.62, 0, 0.28, 0.85, 0.32, sharedMaterials[`player:${mainColor}`], body);
-      const rightArm = addBox(0.58, 0.62, 0, 0.28, 0.85, 0.32, sharedMaterials[`player:${mainColor}`], body);
-      const leftLeg = body.children[2];
-      const rightLeg = body.children[3];
+      for (const eyeX of [-0.12, 0.12]) {
+        const eye = new THREE.Mesh(getGeometry("stick-eye", () => new THREE.SphereGeometry(0.045, 8, 6)), dark);
+        eye.position.set(eyeX, 1.91, 0.29);
+        body.add(eye);
+      }
+
+      function makeLimb(x, y, length, radius, material, isLeg) {
+        const pivot = new THREE.Group();
+        pivot.position.set(x, y, 0);
+        body.add(pivot);
+        const shaft = new THREE.Mesh(
+          getGeometry(`stick-limb:${length}:${radius}`, () => new THREE.CylinderGeometry(radius * 0.86, radius, length, 8)),
+          material
+        );
+        shaft.position.y = -length / 2;
+        pivot.add(shaft);
+        const joint = new THREE.Mesh(
+          getGeometry(`stick-joint:${radius}`, () => new THREE.SphereGeometry(radius * 1.22, 8, 6)),
+          material
+        );
+        joint.position.y = -length;
+        pivot.add(joint);
+        if (isLeg) {
+          const shoe = new THREE.Mesh(getGeometry("stick-shoe", () => new THREE.BoxGeometry(0.3, 0.14, 0.42)), boots);
+          shoe.position.set(0, -length, 0.1);
+          pivot.add(shoe);
+        } else {
+          const hand = new THREE.Mesh(getGeometry("stick-hand", () => new THREE.SphereGeometry(0.11, 8, 6)), skin);
+          hand.position.y = -length - 0.04;
+          pivot.add(hand);
+        }
+        return pivot;
+      }
+
+      const leftArm = makeLimb(-0.31, 1.42, 0.78, 0.075, shirt, false);
+      const rightArm = makeLimb(0.31, 1.42, 0.78, 0.075, shirt, false);
+      const leftLeg = makeLimb(-0.16, 0.72, 0.72, 0.09, trousers, true);
+      const rightLeg = makeLimb(0.16, 0.72, 0.72, 0.09, trousers, true);
 
       const swordGroup = new THREE.Group();
-      addBox(0, 0.7, 0, 0.14, 1.2, 0.14, getMaterial("sword-blade", 0xd9e4ed), swordGroup);
-      addBox(0, 0.12, 0, 0.4, 0.14, 0.16, getMaterial("sword-hilt", 0xc47628), swordGroup);
-      swordGroup.position.set(0.67, 0.6, 0.2);
-      swordGroup.rotation.x = Math.PI / 4;
+      addBox(0, 0.42, 0, 0.1, 0.78, 0.1, getMaterial("sword-blade", 0xd9e4ed), swordGroup);
+      addBox(0, 0.04, 0, 0.34, 0.1, 0.14, getMaterial("sword-hilt", 0xc47628), swordGroup);
+      swordGroup.position.set(0, -0.78, 0.15);
       swordGroup.visible = false;
       rightArm.add(swordGroup);
       const axeGroup = new THREE.Group();
-      addBox(0, 0.56, 0, 0.14, 1.05, 0.14, getMaterial("axe-handle", 0x71472e), axeGroup);
-      addBox(0.18, 1.04, 0, 0.66, 0.45, 0.2, getMaterial("axe-head", 0xc9d2d7), axeGroup);
-      axeGroup.position.set(0.67, 0.52, 0.2);
-      axeGroup.rotation.x = Math.PI / 4;
+      addBox(0, 0.42, 0, 0.1, 0.76, 0.1, getMaterial("axe-handle", 0x71472e), axeGroup);
+      addBox(0.2, 0.76, 0, 0.5, 0.32, 0.17, getMaterial("axe-head", 0xc9d2d7), axeGroup);
+      axeGroup.position.set(0, -0.78, 0.15);
       axeGroup.visible = false;
       rightArm.add(axeGroup);
       group.userData.sword = swordGroup;
@@ -1035,6 +1298,8 @@
     }
 
     function startGameEngine() {
+      matchArenaId = selectedArenaId;
+      MAP = ARENAS[matchArenaId].layout;
       gameState.players = {};
       gameState.blocks = [];
       gameState.chests[0].opened = false;
@@ -1049,6 +1314,7 @@
       document.getElementById("settings-menu").classList.add("hidden");
       document.getElementById("guide-overlay").classList.add("hidden");
       document.getElementById("guide-btn").setAttribute("aria-expanded", "false");
+      document.getElementById("arena-name-hud").textContent = ARENAS[matchArenaId].name.toUpperCase();
       document.getElementById("hud-tokens").textContent = gameState.tokens;
       document.getElementById("hud-blocks").textContent = "0";
       document.getElementById("own-bed-hp").textContent = gameState.bedHp;
@@ -1056,7 +1322,7 @@
       playerMeshes = {};
       blockMeshes = [];
 
-      gameState.players[myPeerId] = { x: MAP.spawn.x, z: MAP.spawn.z, dir: "right", facingX: 1, facingZ: 0, isMe: true, skin: currentSkin, name: getMyName(), hp: MAX_PLAYER_HP, respawnTimer: 0, invulnerabilityTimer: 0, swingTimer: 0, hasSword: false, hasAxe: false, blocks: 0 };
+      gameState.players[myPeerId] = { x: MAP.spawn.x, z: MAP.spawn.z, dir: "right", facingX: 1, facingZ: 0, isMe: true, skin: currentSkin, name: getMyName(), hp: MAX_PLAYER_HP, respawnTimer: 0, invulnerabilityTimer: 0, swingTimer: 0, boostTimer: 0, boostCooldown: 0, boostDirection: 1, hasSword: false, hasAxe: false, blocks: 0 };
       updatePlayerHud(gameState.players[myPeerId]);
 
       let bc = 0;
@@ -1152,6 +1418,8 @@
         ? `RESPAWNING · ${Math.max(0.1, player.respawnTimer).toFixed(1)}s`
         : player.invulnerabilityTimer > 0
           ? `SHIELDED · ${player.invulnerabilityTimer.toFixed(1)}s`
+          : player.boostTimer > 0
+            ? "SPEED BOOST!"
           : "READY";
       if (playerStatus.textContent !== nextStatus) playerStatus.textContent = nextStatus;
     }
@@ -1159,6 +1427,8 @@
     function updateGame(dt) {
       const me = gameState.players[myPeerId]; if (!me) return;
       me.invulnerabilityTimer = Math.max(0, (me.invulnerabilityTimer || 0) - dt);
+      me.boostTimer = Math.max(0, (me.boostTimer || 0) - dt);
+      me.boostCooldown = Math.max(0, (me.boostCooldown || 0) - dt);
       if (me.respawnTimer > 0) {
         me.respawnTimer = Math.max(0, me.respawnTimer - dt);
         if (me.respawnTimer === 0) {
@@ -1187,7 +1457,16 @@
 
         const magnitude = Math.hypot(moveX, moveZ);
         if (magnitude > 1) { moveX /= magnitude; moveZ /= magnitude; }
-        const nextX = me.x + moveX * PLAYER_SPEED * dt;
+        if (me.boostCooldown <= 0) {
+          const pad = getBoostPads().find(candidate => Math.hypot(me.x - candidate.x, me.z - candidate.z) < 1.15);
+          if (pad) {
+            me.boostTimer = 0.7;
+            me.boostCooldown = 3.2;
+            me.boostDirection = pad.direction;
+          }
+        }
+        const boostStep = me.boostTimer > 0 ? me.boostDirection * PLAYER_SPEED * 1.6 * dt : 0;
+        const nextX = me.x + moveX * PLAYER_SPEED * dt + boostStep;
         const nextZ = me.z + moveZ * PLAYER_SPEED * dt;
         if (isSafe3D(nextX, me.z)) me.x = nextX;
         if (isSafe3D(me.x, nextZ)) me.z = nextZ;
@@ -1279,10 +1558,13 @@
     }
 
     function isSafe3D(x, z) {
-      if (Math.hypot(x - MAP.spawn.x, z - MAP.spawn.z) < ARENA_RADIUS - 0.6) return true;
-      if (Math.hypot(x - MAP.enemy.x, z - MAP.enemy.z) < ARENA_RADIUS - 0.6) return true;
-      if (Math.hypot(x - MAP.mid.x, z - MAP.mid.z) < 3.8) return true;
-      if (x >= MAP.spawn.x + ARENA_RADIUS - 1 && x <= MAP.enemy.x - ARENA_RADIUS + 1 && Math.abs(z) < 1.6) return true;
+      if (Math.hypot(x - MAP.spawn.x, z - MAP.spawn.z) < MAP.islandRadius - 0.6) return true;
+      if (Math.hypot(x - MAP.enemy.x, z - MAP.enemy.z) < MAP.islandRadius - 0.6) return true;
+      if (Math.hypot(x - MAP.mid.x, z - MAP.mid.z) < MAP.midRadius - 0.6) return true;
+      const bounds = getBridgeBounds();
+      for (const bridge of MAP.bridges) {
+        if (x >= bounds.startX && x <= bounds.endX && Math.abs(z - bridge.z) < bridge.width / 2 - 0.25) return true;
+      }
       for (const b of gameState.blocks) { if (Math.hypot(x - b.x, z - b.z) < 1.2) return true; }
       return false;
     }
@@ -1310,7 +1592,7 @@
          if(!gameState.players[id]) continue;
          const state = gameState.players[id];
          const mesh = playerMeshes[id];
-         mesh.position.set(state.x, 0, state.z);
+         mesh.position.set(state.x, 0.5, state.z);
          const respawnTimer = state.respawnTimer || 0;
          const invulnerabilityTimer = state.invulnerabilityTimer || 0;
          mesh.visible = respawnTimer <= 0 && (invulnerabilityTimer <= 0 || Math.floor(performance.now() / 90) % 2 === 0);
@@ -1318,6 +1600,7 @@
          mesh.userData.step += dt * (moving ? 11 : 2);
          const swing = state.swingTimer > 0 ? Math.sin(Math.min(state.swingTimer / 0.18, 1) * Math.PI) * 0.45 : 0;
          const walk = moving ? Math.sin(mesh.userData.step) * 0.42 : 0;
+         mesh.userData.body.position.y = moving ? Math.abs(Math.sin(mesh.userData.step * 2)) * 0.045 : 0;
          mesh.userData.limbs[0].rotation.x = walk + swing;
          mesh.userData.limbs[1].rotation.x = -walk - swing;
          mesh.userData.limbs[2].rotation.x = -walk;
@@ -1346,12 +1629,16 @@
       const ctx = ctx2d;
       const width = window.innerWidth;
       const height = window.innerHeight;
-      const scale = Math.min((width - 56) / 52, (height - 180) / 38);
+      const arena = ARENAS[matchArenaId];
+      const worldWidth = MAP.enemy.x - MAP.spawn.x + MAP.islandRadius * 2 + 4;
+      const bridgeDepth = MAP.bridges.reduce((depth, bridge) => Math.max(depth, Math.abs(bridge.z) + bridge.width / 2), 0);
+      const worldDepth = Math.max(MAP.islandRadius * 2 + 4, bridgeDepth * 2 + 6, 24);
+      const scale = Math.min((width - 56) / worldWidth, (height - 180) / worldDepth);
       const centerX = width / 2;
       const centerY = height / 2;
       const point = (x, z) => ({ x: centerX + x * scale, y: centerY + z * scale });
       ctx.clearRect(0, 0, width, height);
-      ctx.fillStyle = "#80d9ef";
+      ctx.fillStyle = arena.canvasSky;
       ctx.fillRect(0, 0, width, height);
 
       ctx.strokeStyle = "rgba(255,255,255,0.28)";
@@ -1365,29 +1652,31 @@
         ctx.stroke();
       }
 
-      drawIsland2D(MAP.spawn.x, MAP.spawn.z, 10, scale, point, 0);
-      drawIsland2D(MAP.enemy.x, MAP.enemy.z, 10, scale, point, 1);
-      drawIsland2D(MAP.mid.x, MAP.mid.z, 4.4, scale, point, 2);
+      drawIsland2D(MAP.spawn.x, MAP.spawn.z, MAP.islandRadius, scale, point, 0);
+      drawIsland2D(MAP.enemy.x, MAP.enemy.z, MAP.islandRadius, scale, point, 1);
+      drawIsland2D(MAP.mid.x, MAP.mid.z, MAP.midRadius, scale, point, 2);
 
-      const bridgeStart = MAP.spawn.x + ARENA_RADIUS - 0.5;
-      const bridgeEnd = MAP.enemy.x - ARENA_RADIUS + 0.5;
-      const bridgeTop = point(bridgeStart, -2.1);
-      const bridgeBottom = point(bridgeEnd, 2.1);
-      ctx.fillStyle = "#71472e";
-      ctx.fillRect(bridgeTop.x, bridgeTop.y, bridgeBottom.x - bridgeTop.x, bridgeBottom.y - bridgeTop.y);
-      ctx.strokeStyle = "#241b17";
-      ctx.lineWidth = 3;
-      ctx.strokeRect(bridgeTop.x, bridgeTop.y, bridgeBottom.x - bridgeTop.x, bridgeBottom.y - bridgeTop.y);
-      ctx.strokeStyle = "#c89555";
-      ctx.lineWidth = Math.max(2, scale * 0.11);
-      for (let x = bridgeStart + 0.8; x < bridgeEnd; x += 1.4) {
-        const top = point(x, -1.95);
-        const bottom = point(x, 1.95);
-        ctx.beginPath();
-        ctx.moveTo(top.x, top.y);
-        ctx.lineTo(bottom.x, bottom.y);
-        ctx.stroke();
+      const bridgeBounds = getBridgeBounds();
+      for (const bridge of MAP.bridges) {
+        const top = point(bridgeBounds.startX, bridge.z - bridge.width / 2);
+        const bottom = point(bridgeBounds.endX, bridge.z + bridge.width / 2);
+        ctx.fillStyle = arena.canvasBridge;
+        ctx.fillRect(top.x, top.y, bottom.x - top.x, bottom.y - top.y);
+        ctx.strokeStyle = "#241b17";
+        ctx.lineWidth = 3;
+        ctx.strokeRect(top.x, top.y, bottom.x - top.x, bottom.y - top.y);
+        ctx.strokeStyle = arena.boostCss;
+        ctx.lineWidth = Math.max(2, scale * 0.11);
+        for (let x = bridgeBounds.startX + 0.8; x < bridgeBounds.endX; x += 1.4) {
+          const plankTop = point(x, bridge.z - bridge.width / 2 + 0.15);
+          const plankBottom = point(x, bridge.z + bridge.width / 2 - 0.15);
+          ctx.beginPath();
+          ctx.moveTo(plankTop.x, plankTop.y);
+          ctx.lineTo(plankBottom.x, plankBottom.y);
+          ctx.stroke();
+        }
       }
+      for (const pad of getBoostPads()) drawBoostPad2D(pad, scale, point, arena.boostCss);
 
       drawBed2D(MAP.spawn.x + 5.5, 0, "#287ed1", scale, point);
       drawBed2D(MAP.enemy.x - 5.5, 0, "#df4e46", scale, point);
@@ -1413,11 +1702,31 @@
       for (const id of playersByDepth) drawStickman2D(gameState.players[id], id === myPeerId, scale, point, time);
     }
 
+    function drawBoostPad2D(pad, scale, point, color) {
+      const p = point(pad.x, pad.z);
+      ctx2d.beginPath();
+      ctx2d.arc(p.x, p.y, Math.max(5, scale * 0.78), 0, Math.PI * 2);
+      ctx2d.fillStyle = "rgba(12, 27, 40, 0.72)";
+      ctx2d.fill();
+      ctx2d.strokeStyle = color;
+      ctx2d.lineWidth = Math.max(2, scale * 0.16);
+      ctx2d.stroke();
+      ctx2d.beginPath();
+      ctx2d.moveTo(p.x - pad.direction * scale * 0.34, p.y);
+      ctx2d.lineTo(p.x + pad.direction * scale * 0.36, p.y);
+      ctx2d.moveTo(p.x + pad.direction * scale * 0.36, p.y);
+      ctx2d.lineTo(p.x + pad.direction * scale * 0.12, p.y - scale * 0.2);
+      ctx2d.moveTo(p.x + pad.direction * scale * 0.36, p.y);
+      ctx2d.lineTo(p.x + pad.direction * scale * 0.12, p.y + scale * 0.2);
+      ctx2d.stroke();
+    }
+
     function drawIsland2D(x, z, radius, scale, point, seed) {
+      const arena = ARENAS[matchArenaId];
       const p = point(x, z);
       ctx2d.beginPath();
       ctx2d.arc(p.x, p.y + scale * 0.16, (radius + 0.75) * scale, 0, Math.PI * 2);
-      ctx2d.fillStyle = "#79513b";
+      ctx2d.fillStyle = arena.canvasDirt;
       ctx2d.fill();
       ctx2d.strokeStyle = "#241b17";
       ctx2d.lineWidth = Math.max(3, scale * 0.22);
@@ -1425,13 +1734,13 @@
 
       ctx2d.beginPath();
       ctx2d.arc(p.x, p.y, radius * scale, 0, Math.PI * 2);
-      ctx2d.fillStyle = "#52a647";
+      ctx2d.fillStyle = arena.canvasIsland;
       ctx2d.fill();
       ctx2d.strokeStyle = "#17351e";
       ctx2d.lineWidth = Math.max(3, scale * 0.2);
       ctx2d.stroke();
 
-      ctx2d.fillStyle = "rgba(173, 224, 92, 0.58)";
+      ctx2d.fillStyle = arena.canvasStroke;
       for (let i = 0; i < (radius > 5 ? 13 : 5); i++) {
         const angle = i * 2.399 + seed;
         const distance = radius * (0.18 + (i % 4) * 0.11);
@@ -1444,24 +1753,50 @@
       }
 
       if (radius > 5) {
-        const treeCount = radius > 15 ? 11 : 5;
+        const treeCount = radius > 11 ? 9 : 5;
         for (let i = 0; i < treeCount; i++) {
           const angle = (i / treeCount) * Math.PI * 2 + x * 0.17;
           const distance = radius * (0.55 + (i % 3) * 0.08);
           const tree = point(x + Math.cos(angle) * distance, z + Math.sin(angle) * distance);
-          ctx2d.fillStyle = "#68442d";
-          ctx2d.fillRect(tree.x - scale * 0.13, tree.y - scale * 0.13, scale * 0.26, scale * 0.26);
-          ctx2d.beginPath();
-          ctx2d.arc(tree.x, tree.y, scale * 0.78, 0, Math.PI * 2);
-          ctx2d.fillStyle = "#25854b";
-          ctx2d.fill();
-          ctx2d.strokeStyle = "#17351e";
-          ctx2d.lineWidth = Math.max(2, scale * 0.12);
-          ctx2d.stroke();
-          ctx2d.beginPath();
-          ctx2d.arc(tree.x - scale * 0.2, tree.y - scale * 0.2, scale * 0.3, 0, Math.PI * 2);
-          ctx2d.fillStyle = "rgba(180, 236, 112, 0.55)";
-          ctx2d.fill();
+          if (arena.treeStyle === "none") {
+            ctx2d.beginPath();
+            ctx2d.moveTo(tree.x, tree.y - scale * 0.9);
+            ctx2d.lineTo(tree.x + scale * 0.42, tree.y + scale * 0.45);
+            ctx2d.lineTo(tree.x - scale * 0.42, tree.y + scale * 0.45);
+            ctx2d.closePath();
+            ctx2d.fillStyle = "#34272f";
+            ctx2d.fill();
+            ctx2d.strokeStyle = arena.canvasStroke;
+            ctx2d.lineWidth = Math.max(2, scale * 0.1);
+            ctx2d.stroke();
+          } else if (arena.treeStyle === "pine") {
+            ctx2d.fillStyle = "#5a4a45";
+            ctx2d.fillRect(tree.x - scale * 0.1, tree.y, scale * 0.2, scale * 0.38);
+            ctx2d.fillStyle = arena.canvasTree;
+            for (let tier = 0; tier < 3; tier++) {
+              const tierY = tree.y - scale * 0.22 - tier * scale * 0.34;
+              ctx2d.beginPath();
+              ctx2d.moveTo(tree.x, tierY - scale * 0.68);
+              ctx2d.lineTo(tree.x + scale * (0.62 - tier * 0.12), tierY + scale * 0.28);
+              ctx2d.lineTo(tree.x - scale * (0.62 - tier * 0.12), tierY + scale * 0.28);
+              ctx2d.closePath();
+              ctx2d.fill();
+            }
+          } else {
+            ctx2d.fillStyle = "#68442d";
+            ctx2d.fillRect(tree.x - scale * 0.13, tree.y - scale * 0.13, scale * 0.26, scale * 0.26);
+            ctx2d.beginPath();
+            ctx2d.arc(tree.x, tree.y, scale * 0.78, 0, Math.PI * 2);
+            ctx2d.fillStyle = arena.canvasTree;
+            ctx2d.fill();
+            ctx2d.strokeStyle = "#17351e";
+            ctx2d.lineWidth = Math.max(2, scale * 0.12);
+            ctx2d.stroke();
+            ctx2d.beginPath();
+            ctx2d.arc(tree.x - scale * 0.2, tree.y - scale * 0.2, scale * 0.3, 0, Math.PI * 2);
+            ctx2d.fillStyle = "rgba(180, 236, 112, 0.55)";
+            ctx2d.fill();
+          }
         }
       }
     }

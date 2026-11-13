@@ -15,9 +15,11 @@ Music is loaded only when enabled and uses the compressed `assets/music.ogg` sou
 - Shop: `E`
 - Place a block or open the center chest: `F`
 - Choose **2D Stickmen** or **3D Island Arena** in the lobby or Gameplay settings
+- In the lobby, choose one of three 3D arenas: **Sky Garden**, **Ember Rift**, or **Frostwood Peaks**. The room host selects the map.
+- Run over the glowing rings near your island bridge for a short speed boost
 - Open the quick guide: click the `?` button or press `?`
 
-Player health is displayed during matches. Your knockout triggers a short respawn and brief spawn shield. Matches and token income pause when the game tab is hidden.
+3D fighters are animated stick figures with spherical heads, articulated limbs, and your selected skin colors. Each arena has its own terrain, scenery, bridge layout, and boost pads. Player health is displayed during matches; a knockout triggers a short respawn and brief spawn shield. Matches and token income pause when the game tab is hidden.
 
 Touch devices have an on-screen joystick and action buttons.
 
