@@ -1,3 +1,23 @@
 # WARS
 
-Wars is a 3D/2.5D game that's fun! :P
+A browser arena game with a hand-drawn look, 3D and 2D stickman modes, bot matches, and online rooms.
+
+## Play locally
+
+Open `index.html` in a browser. It opens the game in `deepseek_html_20261113_4d8953.html`; keep the `assets/` folder beside both files.
+
+Music is loaded only when enabled and uses the compressed `assets/music.ogg` soundtrack.
+
+## Controls
+
+- Move: `WASD` or arrow keys
+- Attack: `Space`
+- Shop: `E`
+- Place a block or open the center chest: `F`
+- Choose **2D Stickmen** or **3D Island Arena** in the lobby or Gameplay settings
+
+Touch devices have an on-screen joystick and action buttons.
+
+## GitHub Pages
+
+In the repository, open **Settings → Pages**, choose **Deploy from a branch**, select `main` and `/(root)`, then save. The root `index.html` is the Pages entry point.

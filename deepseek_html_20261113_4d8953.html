@@ -1,0 +1,1503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>WARS - 3D</title>
+  <link href="https://fonts.googleapis.com/css2?family=VT323&family=Fredoka+One&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+  <!-- Load Three.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+    html, body { height: 100%; background: #87CEEB; font-family: 'Fredoka One', cursive, sans-serif; overflow: hidden; touch-action: none; }
+    .screen { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 2; }
+    .hidden { display: none !important; }
+
+    /* MENUS */
+    .wallpaper-bg { position: fixed; inset: 0; z-index: 0; background-size: cover; background-position: center; opacity: 0.4; transition: background-image 1s; }
+    .music-toggle-container { position: fixed; bottom: 20px; right: 20px; z-index: 999; display: flex; align-items: center; gap: 10px; background: #fff; padding: 10px 15px; border: 3px solid #000; border-radius: 8px; box-shadow: 4px 4px 0 rgba(0,0,0,0.1); cursor: pointer; font-weight: bold; font-family: 'VT323', monospace;}
+    .music-label { font-size: 14px; letter-spacing: 1px; }
+    .toggle-switch { width: 50px; height: 26px; background: #ccc; border-radius: 13px; border: 2px solid #000; position: relative; transition: background 0.3s; }
+    .toggle-switch::after { content: ""; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; background: #000; border-radius: 50%; transition: transform 0.3s; }
+    .music-toggle-container.active .toggle-switch { background: #4caf50; }
+    .music-toggle-container.active .toggle-switch::after { transform: translateX(24px); background: #fff; }
+
+    #loading-screen { z-index: 9999; flex-direction: column; background: #1a1a1a; }
+    .loading-img { width: min(60vw, 400px); animation: silly-wobble 1s ease-in-out infinite alternate; filter: drop-shadow(0 10px 10px rgba(0,0,0,0.5)); }
+    @keyframes silly-wobble { 0% { transform: scale(1) rotate(-2deg); } 100% { transform: scale(1.05) rotate(2deg); } }
+
+    .save-banner { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 1000; }
+    .save-banner-inner { position: relative; width: min(92vw, 420px); }
+    .save-banner-img { width: 100%; display: block; filter: drop-shadow(0 4px 12px rgba(0,0,0,0.2)); }
+    .save-btn { position: absolute; bottom: 8%; height: 38%; background: transparent; border: none; cursor: pointer; border-radius: 6px; }
+    .save-btn:hover { background: rgba(0,0,0,0.05); }
+    .save-yes { left: 6%; width: 42%; } .save-no { right: 6%; width: 42%; }
+
+    #home { flex-direction: column; }
+    .logo { position: relative; width: min(85vw, 640px); aspect-ratio: 600 / 480; }
+    .logo img { position: absolute; display: block; }
+    .sword { left: 0; top: 0.1%; width: 32.5%; }
+    .title { left: 29.5%; top: 36.7%; width: 70%; }
+    .play { position: absolute; left: 33%; top: 64.2%; width: 65.5%; background: none; border: none; cursor: pointer; transition: transform 0.1s; }
+    .play img { position: static; width: 100%; }
+    .play:hover { transform: scale(1.04); } .play:active { transform: scale(0.97); }
+
+    .panel { position: relative; width: min(94vw, 140vh); aspect-ratio: 1582 / 1056; }
+    .panel-art { position: absolute; inset: 0; width: 100%; height: 100%; }
+    .preview { position: absolute; left: 11.8%; top: 28.7%; width: 31.3%; height: 30.8%; display: flex; justify-content: center; align-items: center; }
+    .preview-img { width: 80%; height: 80%; object-fit: contain; filter: drop-shadow(10px 10px 0px rgba(0,0,0,0.2)); }
+    .username-area { position: absolute; left: 11%; top: 61%; width: 33%; z-index: 6; display: flex; flex-direction: column; gap: 4px; }
+    .name-label-text { font-family: 'Fredoka One', cursive; font-size: 24px; color: #000; text-shadow: 1px 1px 0 #fff; margin-bottom: 2px; }
+    .username-input { width: 100%; padding: 8px 10px; font-size: 18px; border: 4px solid #000; border-radius: 6px; background: #fff; outline: none; font-family: 'Fredoka One', cursive; box-shadow: 3px 3px 0 rgba(0,0,0,0.2); }
+    .skin-list { position: absolute; left: 49.7%; top: 42.4%; width: 44.3%; height: 52%; display: grid; grid-template-columns: repeat(4, 1fr); gap: 3%; align-content: start; }
+    .skin { aspect-ratio: 1; background: none; border: none; padding: 6%; cursor: pointer; border-radius: 6px; }
+    .skin img { width: 100%; height: 100%; object-fit: contain; display: block; }
+    .skin.selected { outline: 5px solid #4caf50; background: rgba(0,0,0,0.1); }
+    .skins-play { position: absolute; left: 12%; top: 72%; width: 31%; background: none; border: none; cursor: pointer; }
+    .skins-play img { width: 100%; display: block; }
+
+    .cat-panel, .mode-panel { position: relative; width: min(90vw, 900px); aspect-ratio: 1641 / 1094; }
+    .cat-art, .mode-art { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+    .cat-btn { position: absolute; left: 8%; width: 84%; height: 18%; background: transparent; border: none; cursor: pointer; border-radius: 8px; }
+    .cat-btn:hover { background: rgba(0,0,0,0.05); }
+    .cat-mini { top: 12%; } .cat-ffa { top: 38%; } .cat-main { top: 64%; }
+    .mode-btn { position: absolute; top: 28%; height: 38%; background: transparent; border: none; cursor: pointer; border-radius: 8px; }
+    .mode-sw { left: 8%; width: 40%; } .mode-bw { left: 52%; width: 40%; }
+
+    .main-games-panel { display: flex; flex-direction: column; gap: 20px; width: 90vw; max-width: 800px; }
+    .mg-row { position: relative; width: 100%; max-height: 40vh; display: flex; justify-content: center; }
+    .mg-img { max-width: 100%; max-height: 40vh; width: auto; height: auto; object-fit: contain; filter: drop-shadow(0 8px 16px rgba(0,0,0,0.5)); }
+    .mg-btn { position: absolute; top: 10%; height: 80%; width: 45%; background: transparent; border: none; cursor: pointer; transition: background 0.15s; }
+    .mg-btn:hover { background: rgba(255,255,255,0.15); }
+    .mg-left { left: 5%; } .mg-right { right: 5%; }
+
+    .lobby-panel { position: relative; width: min(94vw, 1000px); aspect-ratio: 1.5; background: #fff; border: 5px solid #000; border-radius: 20px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 10px 10px 0 rgba(0,0,0,0.2); }
+    .lobby-header { display: flex; justify-content: space-between; align-items: center; padding: 15px 25px; border-bottom: 5px solid #000; }
+    .lobby-text { font-family: 'Fredoka One', cursive; font-size: 40px; color: #000; margin: 0; }
+    .lobby-mode-select { display: flex; align-items: center; gap: 7px; font: bold 16px 'VT323', monospace; }
+    .lobby-mode-btn { border: 3px solid #000; border-radius: 6px; background: #eee; padding: 7px 10px; font: bold 16px 'VT323', monospace; cursor: pointer; }
+    .lobby-mode-btn.active { background: #4caf50; color: #fff; }
+    .room-code-box { display: flex; align-items: center; gap: 10px; }
+    .room-label { font-size: 20px; font-weight: bold; }
+    .room-code-text { font-family: monospace; font-size: 20px; font-weight: bold; }
+    .copy-btn { background: #333; color: #fff; border: 2px solid #000; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-family: 'VT323', monospace;}
+
+    .arena { position: relative; flex: 1; background: #2c3e50 url('assets/37442.jpg') center/cover; overflow: hidden; margin: 10px; border: 2px solid #000; border-radius: 10px; }
+    .arena-count { position: absolute; top: 12px; left: 14px; z-index: 2; background: #fff; color: #000; border: 2px solid #000; font-size: 16px; font-weight: bold; padding: 4px 10px; border-radius: 4px; font-family: 'VT323', monospace;}
+    .arena-status { position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); z-index: 2; background: #fff; color: #000; border: 2px solid #000; font-size: 16px; font-weight: bold; padding: 5px 12px; border-radius: 4px; font-family: 'VT323', monospace;}
+    .arena-sprite { position: absolute; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; z-index: 3; cursor: pointer; transition: transform 0.1s; }
+    .arena-sprite img { width: 60px; height: 60px; object-fit: contain; animation: idle-bounce 2s ease-in-out infinite alternate; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.6)); }
+    .arena-sprite:hover { transform: translate(-50%, -55%) scale(1.1); }
+    @keyframes idle-bounce { 0% { transform: translateY(0); } 100% { transform: translateY(-6px); } }
+    .arena-sprite-name { font-size: 18px; font-weight: 800; color: #fff; margin-top: 4px; font-family: 'VT323', monospace; letter-spacing: 1px; text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, 0px 2px 0 #000, 0px -2px 0 #000, -2px 0px 0 #000, 2px 0px 0 #000; }
+    .arena-sprite-badge { position: absolute; top: -10px; right: -15px; background: #ffc107; color: #000; font-size: 12px; font-weight: 900; padding: 2px 6px; border-radius: 3px; font-family: 'VT323', monospace; border: 2px solid #000;}
+    .arena-sprite-badge-bot { background: #f44336; color: #fff; }
+
+    .lobby-footer { display: flex; justify-content: space-between; align-items: center; padding: 15px 25px; border-top: 5px solid #000; }
+    .btn-back, .btn-bot, .btn-join, .btn-start, .btn-ready { background: #fff; color: #000; border: 3px solid #000; padding: 10px 20px; font-size: 18px; font-weight: 900; font-family: 'Fredoka One', cursive; border-radius: 8px; cursor: pointer; transition: transform 0.1s, background 0.1s; }
+    .btn-back:hover, .btn-bot:hover, .btn-join:hover, .btn-ready:hover { background: #eee; transform: scale(1.05); }
+    .btn-start { background: #4caf50; color: #fff; }
+    .btn-start:hover { background: #45a049; }
+    .lobby-actions { display: flex; gap: 10px; }
+
+    .join-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 10; }
+    .join-card { background: #fff; border: 4px solid #000; border-radius: 12px; padding: 24px; width: min(320px, 90%); display: flex; flex-direction: column; gap: 12px; text-align: center; }
+    .join-card-title { font-family: 'Fredoka One', cursive; font-size: 24px; color: #000; }
+    .join-input { padding: 12px; font-size: 16px; border: 3px solid #000; border-radius: 8px; text-align: center; font-family: monospace; font-weight: bold; }
+    .join-card-buttons { display: flex; flex-direction: column; gap: 10px; }
+
+    /* GAME UI */
+    #canvas-container { width: 100%; height: 100%; position: absolute; inset: 0; z-index: 1; }
+    
+    .back { position: absolute; top: 16px; left: 16px; z-index: 10; background: #fff; border: 3px solid #000; color: #000; border-radius: 6px; padding: 8px 16px; font-weight: 700; cursor: pointer; font-family: 'VT323', monospace;}
+    #game-back { top: 84px; left: 20px; }
+    #settings-btn { position: absolute; top: 20px; right: 20px; z-index: 100; background: #fff; border: 3px solid #000; border-radius: 8px; width: 45px; height: 45px; display: flex; justify-content: center; align-items: center; cursor: pointer; box-shadow: 3px 3px 0 rgba(0,0,0,0.2); transition: transform 0.1s; }
+    #settings-btn:hover { transform: scale(1.05); background: #f0f0f0; }
+    #settings-btn::before { content: "⚙️"; font-size: 24px; }
+
+    #token-hud { position: absolute; top: 20px; left: 20px; z-index: 100; background: rgba(0,0,0,0.7); border: 3px solid #000; border-radius: 8px; padding: 10px 20px; display: flex; align-items: center; gap: 15px; font-family: 'VT323', monospace; font-size: 32px; color: #fff; }
+    .token-img { height: 40px; width: auto; object-fit: contain; }
+    .block-icon { width: 30px; height: 30px; background: #8e44ad; border: 3px solid #000; }
+    .hud-divider { width: 3px; height: 30px; background: #555; }
+    #objective-hud { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); z-index: 100; display: flex; gap: 12px; align-items: center; padding: 8px 14px; border: 3px solid #142c38; border-radius: 10px; background: rgba(15,35,48,0.82); color: #fff; font: 20px 'VT323', monospace; text-shadow: 1px 2px 2px #000; white-space: nowrap; }
+    .objective-bed { display: flex; align-items: center; gap: 7px; }
+    .objective-heart { color: #ff6b65; }
+    #game-hint { position: absolute; bottom: 18px; left: 50%; transform: translateX(-50%); z-index: 20; padding: 7px 12px; border: 2px solid rgba(255,255,255,0.65); border-radius: 8px; background: rgba(12,27,40,0.66); color: #fff; font: 18px 'VT323', monospace; text-align: center; white-space: nowrap; pointer-events: none; }
+    @media (max-width: 600px) {
+      #objective-hud { top: 100px; font-size: 17px; }
+      #game-back { top: 162px; left: 20px; }
+      #game-hint { bottom: 10px; max-width: 88vw; white-space: normal; font-size: 15px; }
+    }
+
+    /* SHOP */
+    #shop-menu { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 200; background: #fff; border: 5px solid #000; border-radius: 12px; width: 450px; max-width: 90vw; font-family: 'VT323', monospace; box-shadow: 10px 10px 0 rgba(0,0,0,0.3); display: flex; flex-direction: column; align-items: center; padding-bottom: 15px;}
+    .shop-header-img { width: 200px; margin: 15px 0; filter: drop-shadow(2px 2px 0 #000); }
+    .shop-item { display: flex; width: 90%; align-items: center; padding: 15px; border: 3px solid #000; border-radius: 8px; margin-bottom: 10px; cursor: pointer; background: #f4f4f4; transition: transform 0.1s; }
+    .shop-item:hover { transform: scale(1.02); background: #e0e0e0; }
+    .shop-icon { width: 50px; height: 50px; border: 3px solid #000; margin-right: 15px; display: flex; justify-content: center; align-items: center; font-size: 24px; border-radius: 6px;}
+    .shop-icon.sword { background: #3498db; } .shop-icon.axe { background: #e67e22; } .shop-icon.wood { background: #8e44ad; }
+    .shop-details { flex: 1; }
+    .shop-name { font-size: 24px; color: #000; } 
+    .shop-desc { font-size: 16px; color: #666; }
+    .shop-cost { font-size: 28px; color: #f1c40f; font-weight: bold; text-shadow: 1px 1px 0 #000; }
+    .shop-close { margin-top: 10px; background: #e74c3c; color: #fff; border: 3px solid #000; padding: 10px 30px; font-size: 24px; cursor: pointer; font-weight: bold; border-radius: 8px; }
+
+    /* SETTINGS */
+    #settings-menu { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 300; width: 500px; max-width: 95vw; background: #fff; border: 5px solid #000; border-radius: 12px; display: flex; flex-direction: column; box-shadow: 10px 10px 0 rgba(0,0,0,0.3); overflow: hidden;}
+    .settings-tabs { display: flex; background: #eee; border-bottom: 5px solid #000; }
+    .tab-btn { flex: 1; padding: 15px; font-family: 'Fredoka One', cursive; font-size: 18px; border: none; border-right: 5px solid #000; cursor: pointer; background: #ddd; }
+    .tab-btn:last-child { border-right: none; }
+    .tab-btn.active { background: #fff; font-weight: bold; }
+    .settings-content { padding: 20px; display: flex; flex-direction: column; gap: 15px; }
+    .settings-btn { background: #f4f4f4; border: 4px solid #000; border-radius: 8px; padding: 15px; font-size: 18px; font-family: 'Fredoka One', cursive; cursor: pointer; text-align: left; display: flex; justify-content: space-between; transition: background 0.1s; }
+    .settings-btn:hover { background: #e0e0e0; }
+    .settings-btn.active { background: #4caf50; color: #fff; text-shadow: 1px 1px 0 #000; }
+    .settings-btn.quit { background: #e74c3c; color: #fff; text-shadow: 1px 1px 0 #000; margin-top: 20px;}
+
+    /* TOUCH CONTROLS */
+    #touch-controls { position: absolute; inset: 0; z-index: 50; display: none; pointer-events: none; }
+    .joystick-base { position: absolute; bottom: 50px; left: 50px; width: 120px; height: 120px; background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; pointer-events: auto; }
+    .joystick-stick { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 50px; height: 50px; background: rgba(255,255,255,0.5); border-radius: 50%; pointer-events: none; }
+    .action-btn { position: absolute; bottom: 60px; right: 60px; width: 90px; height: 90px; background: rgba(255,255,255,0.2); border: 3px solid rgba(255,255,255,0.5); border-radius: 50%; pointer-events: auto; display: flex; justify-content: center; align-items: center; color: #fff; font-family: 'VT323', monospace; font-size: 24px; }
+    .shop-btn-touch { position: absolute; bottom: 170px; right: 60px; width: 60px; height: 60px; background: rgba(241, 196, 15, 0.8); border: 3px solid #f39c12; border-radius: 50%; pointer-events: auto; display: flex; justify-content: center; align-items: center; font-family: 'VT323', monospace; font-size: 20px; }
+    .place-btn-touch { position: absolute; bottom: 170px; left: 60px; width: 60px; height: 60px; background: rgba(142, 68, 173, 0.8); border: 3px solid #6c3483; border-radius: 50%; pointer-events: auto; display: flex; justify-content: center; align-items: center; color: #fff; font-family: 'VT323', monospace; font-size: 20px; }
+    @media (pointer: coarse) { #touch-controls { display: block; } }
+
+    /* GAME OVER */
+    #game-over-screen { position: absolute; inset: 0; background: rgba(0,0,0,0.85); z-index: 500; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #fff; text-align: center; }
+    .go-title { font-family: 'VT323', monospace; font-size: 80px; color: #4caf50; margin-bottom: 10px; }
+    .go-subtitle { font-size: 24px; margin-bottom: 20px; }
+    .cat-gif { width: min(300px, 80vw); border-radius: 12px; border: 4px solid #fff; margin-bottom: 20px;}
+    .btn-continue { background: #fff; color: #000; border: 4px solid #000; padding: 12px 30px; font-size: 20px; font-family: 'Fredoka One', cursive; border-radius: 8px; cursor: pointer; font-weight: bold; }
+  </style>
+</head>
+<body>
+
+  <audio id="bg-music" preload="none" loop><source src="assets/music.ogg" type="audio/ogg"></audio>
+  
+  <div id="music-toggle" class="music-toggle-container" onclick="toggleMusic()">
+    <div class="music-label" id="music-label">MUSIC?</div><div class="toggle-switch"></div>
+  </div>
+  
+  <div id="wallpaper" class="wallpaper-bg"></div>
+
+  <div id="loading-screen" class="screen hidden">
+    <div id="loading-fallback" class="loading-text-fallback" style="display:block; color:#fff; font-size:48px; font-family:VT323; margin-top:20px;">LOADING...</div>
+  </div>
+
+  <div id="save-banner" class="save-banner hidden">
+    <div class="save-banner-inner">
+      <img src="assets/save or nah.png" alt="Save Progress?" class="save-banner-img">
+      <button id="save-yes" class="save-btn save-yes"></button><button id="save-no" class="save-btn save-no"></button>
+    </div>
+  </div>
+
+  <main id="home" class="screen">
+    <div class="logo">
+      <img class="sword" src="assets/sword.png" alt=""><img class="title" src="assets/title.png" alt="wars">
+      <button id="play-btn" class="play"><img src="assets/play.png" alt="play"></button>
+    </div>
+  </main>
+
+  <section id="skins" class="screen hidden">
+    <button id="skins-back" class="back">back</button>
+    <div class="panel">
+      <img class="panel-art" src="assets/skins_panel.png" alt="skins">
+      <div class="preview"><img id="preview-img" class="preview-img" alt="selected skin"></div>
+      <div class="username-area">
+        <span class="name-label-text">Name:</span>
+        <input type="text" id="username-input" class="username-input" placeholder="type here..." maxlength="16" autocomplete="off">
+      </div>
+      <div id="skin-list" class="skin-list"></div>
+      <button id="skins-play" class="skins-play"><img src="assets/play.png" alt="play"></button>
+    </div>
+  </section>
+
+  <section id="categories" class="screen hidden">
+    <button id="categories-back" class="back">back</button>
+    <div class="cat-panel">
+      <img class="cat-art" src="assets/modes_ui.png" alt="modes">
+      <button id="btn-minigames" class="cat-btn cat-mini"></button>
+      <button id="btn-ffa" class="cat-btn cat-ffa"></button>
+      <button id="btn-main" class="cat-btn cat-main"></button>
+    </div>
+  </section>
+
+  <section id="modes" class="screen hidden">
+    <button id="modes-back" class="back">back</button>
+    <div class="mode-panel">
+      <img class="mode-art" src="assets/sw_or_bw.png" alt="modes">
+      <button id="btn-skywars" class="mode-btn mode-sw"></button>
+      <button id="btn-bedwars" class="mode-btn mode-bw"></button>
+    </div>
+  </section>
+
+  <section id="maingames" class="screen hidden">
+    <button id="maingames-back" class="back">back</button>
+    <div class="main-games-panel">
+      <div class="mg-row">
+        <img class="mg-img" src="assets/team_squads_duos.png" alt="Squads or Duos">
+        <button id="btn-squads" class="mg-btn mg-left"></button>
+        <button id="btn-duos" class="mg-btn mg-right"></button>
+      </div>
+      <div class="mg-row">
+        <img class="mg-img" src="assets/team_1v1_2v2.png" alt="1v1 or 2v2">
+        <button id="btn-1v1" class="mg-btn mg-left"></button>
+        <button id="btn-2v2" class="mg-btn mg-right"></button>
+      </div>
+    </div>
+  </section>
+
+  <section id="minigames" class="screen hidden">
+    <button id="minigames-back" class="back">back</button>
+    <div class="mode-panel">
+      <img class="mode-art" src="assets/minigames_hide_luck.png" alt="minigames">
+      <button id="btn-hide" class="mode-btn mode-sw"></button><button id="btn-luck" class="mode-btn mode-bw"></button>
+    </div>
+  </section>
+
+  <section id="ffa" class="screen hidden">
+    <button id="ffa-back" class="back">back</button>
+    <div class="mode-panel">
+      <img class="mode-art" src="assets/ffa_modes.png" alt="ffa">
+      <button id="btn-ffa-battle" class="mode-btn mode-sw"></button><button id="btn-ffa-server" class="mode-btn mode-bw"></button>
+    </div>
+  </section>
+
+  <section id="serverweb" class="screen hidden">
+    <button id="serverweb-back" class="back">back</button>
+    <div class="mode-panel">
+      <img class="mode-art" src="assets/server_or_web.png" alt="server or web">
+      <button id="btn-server" class="cat-btn" style="top:12%;height:28%;"></button><button id="btn-web" class="cat-btn" style="top:58%;height:28%;"></button>
+    </div>
+  </section>
+
+  <section id="lobby" class="screen hidden">
+    <div class="lobby-panel">
+      <div class="lobby-header">
+        <h1 class="lobby-text">LOBBY</h1>
+        <div class="lobby-mode-select" aria-label="Choose game view">
+          <span>PLAY IN:</span>
+          <button id="lobby-mode-3d" class="lobby-mode-btn active" onclick="setGameMode('3d')">3D</button>
+          <button id="lobby-mode-2d" class="lobby-mode-btn" onclick="setGameMode('2d')">2D STICKMEN</button>
+        </div>
+        <div id="room-code-box" class="room-code-box">
+          <span class="room-label">CODE:</span>
+          <span id="room-code" class="room-code-text">......</span>
+          <button id="copy-code" class="copy-btn">Copy</button>
+        </div>
+      </div>
+      <div id="arena" class="arena">
+        <div id="arena-count" class="arena-count">0 players</div>
+        <div id="lobby-status" class="arena-status"></div>
+      </div>
+      <div class="lobby-footer">
+        <button id="lobby-back" class="btn-back">Back</button>
+        <div class="lobby-actions">
+          <button id="btn-add-bot" class="btn-bot">+ Add Bot</button>
+          <button id="btn-remove-bot" class="btn-bot">− Remove</button>
+          <button id="lobby-join-toggle" class="btn-join">Join a Room instead</button>
+          <button id="btn-ready" class="btn-ready hidden">Ready Up</button>
+          <button id="lobby-start" class="btn-start">Start Game</button>
+        </div>
+      </div>
+      <div id="join-overlay" class="join-overlay hidden">
+        <div class="join-card">
+          <h3 class="join-card-title">Join a Room</h3>
+          <input type="text" id="join-code-input" class="join-input" placeholder="Enter room code" maxlength="20" autocomplete="off">
+          <div class="join-card-buttons">
+            <button id="join-btn" class="btn-start">Join Room</button><button id="cancel-join" class="btn-join">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="game" class="screen hidden">
+    <div id="canvas-container"></div>
+    
+    <div id="game-over-screen" class="hidden">
+      <h1 class="go-title" id="go-title">VICTORY!</h1>
+      <p class="go-subtitle" id="go-subtitle">You destroyed the enemy bed!</p>
+      <img src="https://media.giphy.com/media/MDJ9IbxxvDUQM/giphy.gif" class="cat-gif" alt="Cute Cat">
+      <button class="btn-continue" onclick="quitGame()">Back to Menu</button>
+    </div>
+
+    <div id="settings-btn" onclick="toggleSettings()"></div>
+    
+    <div id="token-hud">
+      <img src="assets/currency.png" class="token-img" alt="Tokens">
+      <div class="token-amount" id="hud-tokens">500</div>
+      <div class="hud-divider"></div>
+      <div class="block-icon"></div><div class="token-amount" id="hud-blocks">0</div>
+    </div>
+    <div id="objective-hud">
+      <div class="objective-bed"><span>YOUR BED</span><span class="objective-heart">♥</span><span id="own-bed-hp">100</span></div>
+      <div class="hud-divider"></div>
+      <div class="objective-bed"><span>ENEMY BED</span><span class="objective-heart">♥</span><span id="enemy-bed-hp">100</span></div>
+    </div>
+    <div id="game-hint">WASD / ARROWS MOVE · SPACE SWING · E SHOP · F PLACE / OPEN CHEST</div>
+
+    <div id="shop-menu" class="hidden">
+      <img src="assets/shop.png" class="shop-header-img" alt="Shop">
+      <div class="shop-item" onclick="buySword()">
+        <div class="shop-icon sword">🗡️</div>
+        <div class="shop-details"><div class="shop-name">Sword</div><div class="shop-desc">Double damage (20). Fast swing.</div></div>
+        <div class="shop-cost">120</div>
+      </div>
+      <div class="shop-item" onclick="buyAxe()">
+        <div class="shop-icon axe">🪓</div>
+        <div class="shop-details"><div class="shop-name">Axe</div><div class="shop-desc">Triple damage (35). Slow swing.</div></div>
+        <div class="shop-cost">250</div>
+      </div>
+      <div class="shop-item" onclick="buyWood()">
+        <div class="shop-icon wood">🟪</div>
+        <div class="shop-details"><div class="shop-name">Wood Blocks (x5)</div><div class="shop-desc">Build bridges to the middle.</div></div>
+        <div class="shop-cost">25</div>
+      </div>
+      <button class="shop-close" onclick="toggleShop()">CLOSE</button>
+    </div>
+
+    <div id="settings-menu" class="hidden">
+      <div class="settings-tabs">
+        <button class="tab-btn active" onclick="switchTab('gameplay')">Gameplay</button>
+        <button class="tab-btn" onclick="switchTab('visuals')">Visuals</button>
+      </div>
+      <div id="tab-gameplay" class="settings-content">
+        <button class="settings-btn active" id="cam-first" onclick="setCamera('first')">Chase Camera 🎥</button>
+        <button class="settings-btn" id="cam-iso" onclick="setCamera('iso')">Isometric Camera 🗺️</button>
+        <button class="settings-btn active" id="game-mode-3d" onclick="setGameMode('3d')">3D Island Arena 🌴</button>
+        <button class="settings-btn" id="game-mode-2d" onclick="setGameMode('2d')">2D Stickmen 🎨</button>
+        <button class="settings-btn quit" onclick="quitGame()">QUIT GAME 🚪</button>
+      </div>
+      <div id="tab-visuals" class="settings-content hidden">
+        <button class="settings-btn active" id="style-sweat" onclick="setStyle('sweat')">SWEAT 🖥️</button>
+        <button class="settings-btn" id="style-pixel" onclick="setStyle('pixelated')">PIXELATED 👾</button>
+        <button class="settings-btn" id="style-paper" onclick="setStyle('paper')">PAPER 📄</button>
+      </div>
+    </div>
+
+    <div id="touch-controls">
+      <div class="joystick-base" id="joystick-base"><div class="joystick-stick" id="joystick-stick"></div></div>
+      <div class="action-btn" id="btn-attack">SWING</div>
+      <div class="shop-btn-touch" id="btn-shop-touch">SHOP</div>
+      <div class="place-btn-touch" id="btn-place-touch">PLACE</div>
+    </div>
+
+    <button id="game-back" class="back">back</button>
+  </section>
+
+  <script>
+    // ===================== CORE SETUP & MENUS =====================
+    const music = document.getElementById("bg-music");
+    let isPlaying = false;
+    function toggleMusic() {
+      if (isPlaying) { music.pause(); document.getElementById("music-toggle").classList.remove("active"); document.getElementById("music-label").textContent = "MUSIC OFF"; } 
+      else { music.play().then(() => { document.getElementById("music-toggle").classList.add("active"); document.getElementById("music-label").textContent = "MUSIC ON"; }).catch(e => { alert("Unable to play music. Check that assets/music.ogg is available and your browser supports Opus."); }); }
+      isPlaying = !isPlaying;
+    }
+
+    const WALLPAPERS = ["assets/5114.png", "assets/2778.png", "assets/1765.png"];
+    document.getElementById("wallpaper").style.backgroundImage = `url('${WALLPAPERS[Math.floor(Math.random() * WALLPAPERS.length)]}')`;
+
+    function loadScene(screenName, isMatchStart = false) {
+      const loadScreen = document.getElementById("loading-screen");
+      const time = isMatchStart ? 1500 : 500;
+      loadScreen.classList.remove("hidden");
+      setTimeout(() => { loadScreen.classList.add("hidden"); showScreen(screenName); }, time);
+    }
+
+    const SKINS = [
+      { id: "default", img: "assets/default.png" }, { id: "red", img: "assets/skin_red.png" },
+      { id: "blue", img: "assets/skin_blue.png" }, { id: "green", img: "assets/skin_green.png" },
+      { id: "yellow", img: "assets/skin_yellow.png" }, { id: "pink", img: "assets/skin_pink.png" },
+      { id: "cyan", img: "assets/skin_cyan.png" }, { id: "orange", img: "assets/skin_orange.png" },
+    ];
+    let currentSkin = localStorage.getItem("wars-skin") || SKINS[0].id;
+    let currentUsername = localStorage.getItem("wars-username") || "";
+    let allowSave = localStorage.getItem("wars-allow-save") === "yes" ? true : (localStorage.getItem("wars-allow-save") === "no" ? false : null);
+
+    function saveData() { if (!allowSave) return; localStorage.setItem("wars-skin", currentSkin); if (currentUsername.trim()) localStorage.setItem("wars-username", currentUsername.trim()); }
+    function chooseSkin(id) { currentSkin = id; saveData(); drawSkins(); }
+
+    function drawSkins() {
+      document.getElementById("preview-img").src = SKINS.find(s => s.id === currentSkin).img;
+      const list = document.getElementById("skin-list"); list.innerHTML = "";
+      for (const s of SKINS) {
+        const btn = document.createElement("button"); btn.className = "skin" + (s.id === currentSkin ? " selected" : "");
+        btn.innerHTML = '<img src="' + s.img + '">'; btn.onclick = () => chooseSkin(s.id); list.appendChild(btn);
+      }
+      if (document.getElementById("username-input").value !== currentUsername) document.getElementById("username-input").value = currentUsername;
+    }
+
+    const screens = {
+      home: document.getElementById("home"), skins: document.getElementById("skins"), categories: document.getElementById("categories"),
+      modes: document.getElementById("modes"), maingames: document.getElementById("maingames"), minigames: document.getElementById("minigames"),
+      ffa: document.getElementById("ffa"), serverweb: document.getElementById("serverweb"), lobby: document.getElementById("lobby"), game: document.getElementById("game"),
+    };
+    let selectedCategory=null, selectedMode=null, selectedTeam=null, selectedSubMode=null, selectedPlatform=null;
+
+    function showScreen(name) {
+      for (const key in screens) screens[key].classList.toggle("hidden", key !== name);
+      if (name === "skins") drawSkins();
+      if (name === "game") startGameEngine();
+      if (name === "lobby") updateLobbyUI();
+    }
+
+    document.getElementById("play-btn").onclick = () => { if(allowSave===null) document.getElementById("save-banner").classList.remove("hidden"); loadScene("skins"); };
+    document.getElementById("save-yes").onclick = () => { allowSave=true; localStorage.setItem("wars-allow-save","yes"); document.getElementById("save-banner").classList.add("hidden"); saveData(); };
+    document.getElementById("save-no").onclick = () => { allowSave=false; localStorage.setItem("wars-allow-save","no"); document.getElementById("save-banner").classList.add("hidden"); };
+    document.getElementById("username-input").oninput = (e) => { currentUsername = e.target.value; saveData(); };
+    document.getElementById("skins-back").onclick = () => loadScene("home");
+    document.getElementById("skins-play").onclick = () => { currentUsername = document.getElementById("username-input").value.trim(); loadScene("categories"); };
+    document.getElementById("categories-back").onclick = () => loadScene("skins");
+    document.getElementById("btn-minigames").onclick = () => { selectedCategory = "minigames"; loadScene("minigames"); };
+    document.getElementById("btn-ffa").onclick = () => { selectedCategory = "ffa"; loadScene("ffa"); };
+    document.getElementById("btn-main").onclick = () => { selectedCategory = "main"; loadScene("modes"); };
+    document.getElementById("modes-back").onclick = () => loadScene("categories");
+    document.getElementById("btn-skywars").onclick = () => { selectedMode = "skywars"; loadScene("maingames"); };
+    document.getElementById("btn-bedwars").onclick = () => { selectedMode = "bedwars"; loadScene("maingames"); };
+    document.getElementById("maingames-back").onclick = () => loadScene("modes");
+    document.getElementById("btn-1v1").onclick = () => { selectedTeam = "1v1"; loadScene("serverweb"); };
+    document.getElementById("btn-2v2").onclick = () => { selectedTeam = "2v2"; loadScene("serverweb"); };
+    document.getElementById("btn-squads").onclick = () => { selectedTeam = "squads"; loadScene("serverweb"); };
+    document.getElementById("btn-duos").onclick = () => { selectedTeam = "duos"; loadScene("serverweb"); };
+    document.getElementById("minigames-back").onclick = () => loadScene("categories");
+    document.getElementById("btn-hide").onclick = () => { selectedSubMode = "hide"; loadScene("serverweb"); };
+    document.getElementById("btn-luck").onclick = () => { selectedSubMode = "luck"; loadScene("serverweb"); };
+    document.getElementById("ffa-back").onclick = () => loadScene("categories");
+    document.getElementById("btn-ffa-battle").onclick = () => { selectedSubMode = "ffa-battle"; loadScene("serverweb"); };
+    document.getElementById("btn-ffa-server").onclick = () => { selectedSubMode = "ffa-server"; loadScene("serverweb"); };
+    document.getElementById("serverweb-back").onclick = () => {
+      if (selectedCategory === "main") loadScene("maingames"); else if (selectedCategory === "minigames") loadScene("minigames"); else loadScene("ffa");
+    };
+    document.getElementById("btn-server").onclick = () => { selectedPlatform = "server"; startAsHost(); };
+    document.getElementById("btn-web").onclick = () => { selectedPlatform = "web"; startBotMatch(); };
+
+    // ===================== MULTIPLAYER & LOBBY =====================
+    const BOT_NAMES = ["tryhxrd", "balright", "voidness", "demonic", "hardly", "workitout", "urgently", "mindly", "killing"];
+    let botCounter = 0, peer = null, isHost = false, myPeerId = null, hostId = null, connections = {}, players = {}, amIReady = false;
+    function getMyName() { return currentUsername.trim() || "Player"; }
+    function getModeText() { return (selectedCategory === "main" ? (selectedMode + " · " + selectedTeam) : selectedCategory).toUpperCase(); }
+
+    function pickBotName() { return BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)]; }
+    function makeBots(count) {
+      const bots = {};
+      for (let i = 0; i < count; i++) {
+        const id = "bot-" + (++botCounter);
+        bots[id] = { username: pickBotName(), skin: SKINS[Math.floor(Math.random() * SKINS.length)].id, isBot: true, ready: true };
+      }
+      return bots;
+    }
+    function getDefaultBotCount() {
+      if (selectedTeam === "1v1") return 1; if (selectedTeam === "2v2") return 3; if (selectedTeam === "duos") return 5; if (selectedTeam === "squads") return 7;
+      return 3;
+    }
+    function configureLobbyFor(mode) {
+      const codeBox = document.getElementById("room-code-box"), addBtn = document.getElementById("btn-add-bot"), remBtn = document.getElementById("btn-remove-bot"), joinTgl = document.getElementById("lobby-join-toggle"), readyBtn = document.getElementById("btn-ready");
+      codeBox.classList.toggle("hidden", mode === "bot");
+      addBtn.classList.toggle("hidden", mode === "private-join"); remBtn.classList.toggle("hidden", mode === "private-join");
+      joinTgl.classList.toggle("hidden", mode !== "private-host");
+      readyBtn.classList.toggle("hidden", mode !== "private-join");
+    }
+    function updateLobbyUI() {
+      document.getElementById("room-code").textContent = (myPeerId && myPeerId !== "local") ? myPeerId : "......";
+      renderArena(); updateLobbyControls();
+    }
+    function updateLobbyControls() {
+      const startBtn = document.getElementById("lobby-start"), readyBtn = document.getElementById("btn-ready");
+      if (isHost) {
+        let allReady = true; for (const id in players) { if (id !== myPeerId && !players[id].isBot && !players[id].ready) allReady = false; }
+        startBtn.textContent = "Start Game"; startBtn.disabled = false; startBtn.classList.toggle("ready-glow", allReady);
+      } else {
+        startBtn.textContent = "Waiting for host…"; startBtn.disabled = true;
+        readyBtn.textContent = amIReady ? "Unready" : "Ready Up"; readyBtn.style.background = amIReady ? "#4caf50" : "#333";
+      }
+    }
+    function renderArena() {
+      const arena = document.getElementById("arena"); arena.querySelectorAll(".arena-sprite").forEach(el => el.remove());
+      const list = [{ id: myPeerId, name: getMyName(), skin: currentSkin, isMe: true, isHostCard: isHost, isBot: false }];
+      for (const id in players) { if (id !== myPeerId) list.push({ id, name: players[id].username, skin: players[id].skin, isMe: false, isHostCard: (id === hostId), isBot: !!players[id].isBot, ready: players[id].ready }); }
+      const n = list.length, cx = 50, cy = 50, rx = n <= 6 ? 26 : 33, ry = n <= 6 ? 22 : 30;
+      list.forEach((p, i) => {
+        const a = (i / n) * Math.PI * 2 - Math.PI / 2; const x = n===1?50:(n===2?(i===0?36:64):cx + Math.cos(a) * rx), y = n===1?50:(n===2?50:cy + Math.sin(a) * ry);
+        const el = document.createElement("div"); el.className = "arena-sprite" + (p.isMe ? " arena-sprite-me" : "");
+        el.onclick = () => { el.classList.remove("jump-anim"); void el.offsetWidth; el.classList.add("jump-anim"); };
+        el.innerHTML = `<img src="${SKINS.find(s=>s.id===p.skin).img}"><div class="arena-sprite-name">${p.name}</div>`;
+        if (p.isHostCard) el.innerHTML += `<div class="arena-sprite-badge">HOST</div>`;
+        else if (p.isBot) el.innerHTML += `<div class="arena-sprite-badge arena-sprite-badge-bot">BOT</div>`;
+        else if (p.ready) el.innerHTML += `<div class="arena-sprite-badge" style="background:#4caf50;color:#fff">✓ READY</div>`;
+        el.style.left = x + "%"; el.style.top = y + "%"; arena.appendChild(el);
+      });
+      document.getElementById("arena-count").textContent = n + (n === 1 ? " player" : " players");
+    }
+    function cleanupPeer() { if (peer) peer.destroy(); peer = null; connections = {}; players = {}; myPeerId = null; hostId = null; isHost = false; amIReady = false; botCounter = 0; }
+    function broadcastPlayers() { if (isHost) for (const id in connections) try { connections[id].send({ type: "players", players, hostId }); } catch(e){} }
+    function startAsHost() { cleanupPeer(); isHost = true; configureLobbyFor("private-host"); peer = new Peer(); peer.on("open", (id) => { myPeerId = id; hostId = id; players[id] = { username: getMyName(), skin: currentSkin, ready: true }; updateLobbyUI(); loadScene("lobby"); }); peer.on("connection", handleConnection); }
+    function startBotMatch() { cleanupPeer(); isHost = true; hostId = "me"; myPeerId = "local"; configureLobbyFor("bot"); players = makeBots(getDefaultBotCount()); loadScene("lobby"); }
+    function joinRoom(code) { cleanupPeer(); isHost = false; peer = new Peer(); peer.on("open", (id) => { myPeerId = id; const conn = peer.connect(code.trim(), { reliable: true }); handleConnection(conn); conn.on("open", () => { conn.send({ type: "join", username: getMyName(), skin: currentSkin }); configureLobbyFor("private-join"); document.getElementById("join-overlay").classList.add("hidden"); loadScene("lobby"); }); }); }
+    function handleConnection(conn) {
+      connections[conn.peer] = conn;
+      conn.on("data", (data) => {
+        if (data.type === "join") { players[conn.peer] = { username: data.username, skin: data.skin, ready: false }; updateLobbyUI(); broadcastPlayers(); }
+        if (data.type === "ready") { players[conn.peer].ready = data.ready; updateLobbyUI(); broadcastPlayers(); }
+        if (data.type === "players") { players = data.players; hostId = data.hostId; updateLobbyUI(); }
+        if (data.type === "start") loadScene("game", true);
+        if (data.type === "gameState" && !isHost) {
+          for (let id in data.state) { if (id !== myPeerId) { if (gameState.players[id]) Object.assign(gameState.players[id], data.state[id]); else gameState.players[id] = data.state[id]; } }
+          gameState.bedHp = data.bedHp; gameState.enemyBedHp = data.enemyBedHp;
+          if(data.blocks) { gameState.blocks = data.blocks; if (gameMode === "3d") rebuild3DBlocks(); }
+        }
+        if (data.type === "playerMove" && isHost) { if(gameState.players[data.id]) Object.assign(gameState.players[data.id], data); }
+        if (data.type === "placeBlock") { gameState.blocks.push(data.block); if (gameMode === "3d") spawn3DBlock(data.block.x, data.block.z); for (const cid in connections) try { connections[cid].send({ type: "blockPlaced", block: data.block }); } catch(e){} }
+        if (data.type === "blockPlaced" && !isHost) { gameState.blocks.push(data.block); if (gameMode === "3d") spawn3DBlock(data.block.x, data.block.z); }
+      });
+      conn.on("close", () => { delete connections[conn.peer]; delete players[conn.peer]; if (conn.peer === hostId) { hostId = null; players = {}; } updateLobbyUI(); if (isHost) broadcastPlayers(); });
+    }
+    document.getElementById("lobby-back").onclick = () => { cleanupPeer(); loadScene("serverweb"); };
+    document.getElementById("copy-code").onclick = () => { if (myPeerId && myPeerId !== "local") { navigator.clipboard.writeText(myPeerId); document.getElementById("copy-code").textContent = "Copied!"; setTimeout(()=>document.getElementById("copy-code").textContent = "Copy", 1500); } };
+    document.getElementById("btn-add-bot").onclick = () => { if(isHost) { const id="bot-"+(++botCounter); players[id]={username:pickBotName(),skin:SKINS[Math.floor(Math.random()*SKINS.length)].id,isBot:true,ready:true}; renderArena(); updateLobbyControls(); broadcastPlayers(); } };
+    document.getElementById("btn-remove-bot").onclick = () => { if(isHost) { const b=Object.keys(players).filter(id=>players[id].isBot); if(b.length){ delete players[b[b.length-1]]; renderArena(); updateLobbyControls(); broadcastPlayers(); } } };
+    document.getElementById("lobby-join-toggle").onclick = () => document.getElementById("join-overlay").classList.remove("hidden");
+    document.getElementById("cancel-join").onclick = () => document.getElementById("join-overlay").classList.add("hidden");
+    document.getElementById("join-btn").onclick = () => joinRoom(document.getElementById("join-code-input").value);
+    document.getElementById("btn-ready").onclick = () => { if(!isHost){ amIReady=!amIReady; connections[hostId]?.send({type:"ready",ready:amIReady}); updateLobbyControls(); } };
+    document.getElementById("lobby-start").onclick = () => { if(isHost) { if(selectedPlatform==="server") for(const id in connections) try{connections[id].send({type:"start"});}catch(e){} loadScene("game", true); } };
+    document.getElementById("game-back").onclick = () => { quitGame(); };
+
+    // ===================== SETTINGS & VISUAL STYLES =====================
+    let currentStyle = 'sweat';
+    let currentCamera = 'first';
+    let isSettingsOpen = false;
+    
+    function toggleSettings() { 
+      isSettingsOpen = !isSettingsOpen; 
+      document.getElementById("settings-menu").classList.toggle("hidden", !isSettingsOpen); 
+    }
+    
+    function switchTab(tab) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.settings-content').forEach(c => c.classList.add('hidden'));
+      if(tab === 'gameplay') { document.querySelector('.tab-btn:nth-child(1)').classList.add('active'); document.getElementById('tab-gameplay').classList.remove('hidden'); }
+      else { document.querySelector('.tab-btn:nth-child(2)').classList.add('active'); document.getElementById('tab-visuals').classList.remove('hidden'); }
+    }
+
+    function quitGame() { stopGameEngine(); loadScene(selectedPlatform === "server" ? "lobby" : "serverweb"); }
+    
+    function setCamera(mode) {
+      currentCamera = mode;
+      document.getElementById('cam-iso').classList.toggle('active', mode === 'iso');
+      document.getElementById('cam-first').classList.toggle('active', mode === 'first');
+      toggleSettings(); 
+    }
+
+    function setGameMode(mode) {
+      if (mode !== "3d" && mode !== "2d") return;
+      gameMode = mode;
+      document.getElementById("game-mode-3d").classList.toggle("active", mode === "3d");
+      document.getElementById("game-mode-2d").classList.toggle("active", mode === "2d");
+      document.getElementById("lobby-mode-3d").classList.toggle("active", mode === "3d");
+      document.getElementById("lobby-mode-2d").classList.toggle("active", mode === "2d");
+      const inGame = !document.getElementById("game").classList.contains("hidden");
+      if (inGame) {
+        setupGameView();
+        toggleSettings();
+      }
+    }
+
+    function setStyle(style) {
+      currentStyle = style;
+      document.getElementById('style-sweat').classList.toggle('active', style === 'sweat');
+      document.getElementById('style-pixel').classList.toggle('active', style === 'pixelated');
+      document.getElementById('style-paper').classList.toggle('active', style === 'paper');
+      if (renderer) {
+        const pixelRatioCap = style === "pixelated" ? 0.72 : (style === "paper" ? 1 : 1.5);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, pixelRatioCap));
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.toneMapping = style === "paper" ? THREE.NoToneMapping : THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = style === "sweat" ? 0.9 : 1;
+        if (scene) {
+          const sky = style === "paper" ? 0xf3e7cb : 0x8dd8ff;
+          scene.background.setHex(sky);
+          scene.fog.color.setHex(sky);
+        }
+      }
+      if (canvas2d) onWindowResize();
+      toggleSettings(); 
+    }
+
+    // ===================== WEBGL 3D ENGINE =====================
+    let scene, camera, renderer, canvas2d, ctx2d;
+    let playerMeshes = {}, blockMeshes = [], chestMesh = null;
+    let gameLoopId = null, tokenIntervalId = null, lastTime = 0, lastMoveTime = 0;
+    let isGameOver = false, isShopOpen = false, gameMode = "3d";
+    const sharedGeometry = {};
+    const sharedMaterials = {};
+    const moveInput = { x: 0, z: 0 };
+    let gameState = { players: {}, bedHp: 100, enemyBedHp: 100, tokens: 500, blocks: [], particles: [], chests: [{x: 0, z: 0, opened: false}] };
+    const keys = {};
+
+    const MAP = { spawn: { x: -15, z: 0 }, enemy: { x: 15, z: 0 }, mid: { x: 0, z: 0 } };
+    const PLAYER_SPEED = 8;
+    const ARENA_RADIUS = 10;
+
+    function getGeometry(key, create) {
+      if (!sharedGeometry[key]) sharedGeometry[key] = create();
+      return sharedGeometry[key];
+    }
+
+    function getMaterial(key, color, options = {}) {
+      if (!sharedMaterials[key]) {
+        const linearColor = new THREE.Color(color).convertSRGBToLinear();
+        sharedMaterials[key] = new THREE.MeshStandardMaterial({ color: linearColor, roughness: 0.94, flatShading: true, ...options });
+      }
+      return sharedMaterials[key];
+    }
+
+    function addBox(x, y, z, width, height, depth, material, parent = scene) {
+      const mesh = new THREE.Mesh(getGeometry(`box:${width}:${height}:${depth}`, () => new THREE.BoxGeometry(width, height, depth)), material);
+      mesh.position.set(x, y, z);
+      parent.add(mesh);
+      return mesh;
+    }
+
+    function initThreeJS() {
+      try {
+        const container = document.getElementById("canvas-container");
+        container.innerHTML = "";
+        
+        scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x8dd8ff);
+        scene.fog = new THREE.Fog(0x8dd8ff, 55, 125);
+
+        camera = new THREE.PerspectiveCamera(48, window.innerWidth / window.innerHeight, 0.1, 180);
+        
+        const pixelRatioCap = currentStyle === "pixelated" ? 0.72 : (currentStyle === "paper" ? 1 : 1.5);
+        const pixelRatio = Math.min(window.devicePixelRatio || 1, pixelRatioCap);
+        renderer = new THREE.WebGLRenderer({
+          antialias: pixelRatio <= 1.25,
+          alpha: false,
+          powerPreference: "high-performance",
+          stencil: false,
+          depth: true
+        });
+        renderer.setPixelRatio(pixelRatio);
+        renderer.setClearColor(0x8dd8ff, 1);
+        renderer.outputEncoding = THREE.sRGBEncoding;
+        renderer.toneMapping = currentStyle === "paper" ? THREE.NoToneMapping : THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = currentStyle === "sweat" ? 0.9 : 1;
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        if (renderer.domElement.parentElement) renderer.domElement.parentElement.removeChild(renderer.domElement);
+        container.appendChild(renderer.domElement);
+
+        const ambientLight = new THREE.HemisphereLight(0xe4f6ff, 0x42633d, 0.48);
+        scene.add(ambientLight);
+        
+        const dirLight = new THREE.DirectionalLight(0xfff0cf, 0.58);
+        dirLight.position.set(-18, 30, 18);
+        scene.add(dirLight);
+
+        const water = new THREE.Mesh(
+          getGeometry("water", () => new THREE.PlaneGeometry(240, 240)),
+          getMaterial("water", 0x39a9cf, { roughness: 0.32, metalness: 0.08 })
+        );
+        water.rotation.x = -Math.PI / 2;
+        water.position.y = -7.7;
+        scene.add(water);
+
+        createIsland(MAP.spawn.x, MAP.spawn.z, 10, 0x5EAA3E);
+        createIsland(MAP.enemy.x, MAP.enemy.z, 10, 0x5EAA3E);
+        createIsland(MAP.mid.x, MAP.mid.z, 4.4, 0x5EAA3E);
+        createBridge(MAP.spawn.x + ARENA_RADIUS - 0.5, 0, MAP.enemy.x - ARENA_RADIUS + 0.5);
+        createBed(MAP.spawn.x + 5.5, MAP.spawn.z, 0x3e9ee8);
+        createBed(MAP.enemy.x - 5.5, MAP.enemy.z, 0xec564c);
+        createChest(MAP.mid.x, MAP.mid.z);
+
+        window.addEventListener("resize", onWindowResize);
+      } catch(e) {
+        console.error("WebGL failed:", e);
+        document.getElementById("go-title").textContent = "3D NOT AVAILABLE";
+        document.getElementById("go-subtitle").textContent = "This browser could not start WebGL. Try enabling hardware acceleration.";
+        document.getElementById("game-over-screen").classList.remove("hidden");
+      }
+    }
+
+    function createIsland(cx, cz, radius, color) {
+      const grass = new THREE.Mesh(
+        getGeometry(`grass:${radius}`, () => new THREE.CylinderGeometry(radius, radius * 0.98, 1, 48)),
+        getMaterial(`grass:${color}`, color)
+      );
+      grass.position.set(cx, 0, cz);
+      scene.add(grass);
+
+      const dirt = new THREE.Mesh(
+        getGeometry(`dirt:${radius}`, () => new THREE.CylinderGeometry(radius - 0.6, radius * 0.45, 8, 32)),
+        getMaterial("dirt", 0x76513b)
+      );
+      dirt.position.set(cx, -4.5, cz);
+      scene.add(dirt);
+      
+      const rocks = new THREE.Mesh(
+        getGeometry(`rock:${radius}`, () => new THREE.CylinderGeometry(radius * 0.42, radius * 0.2, 3.2, 7)),
+        getMaterial("rock", 0x87938b)
+      );
+      rocks.position.set(cx, -1.7, cz);
+      scene.add(rocks);
+      createPaintedGrass(cx, cz, radius);
+
+      if (radius > 5) {
+        const treeCount = radius > 15 ? 11 : 5;
+        for (let i = 0; i < treeCount; i++) {
+          const angle = (i / treeCount) * Math.PI * 2 + (cx * 0.17);
+          const distance = radius * (0.55 + (i % 3) * 0.08);
+          createTree(cx + Math.cos(angle) * distance, 0.5, cz + Math.sin(angle) * distance);
+        }
+      }
+    }
+
+    function createPaintedGrass(cx, cz, radius) {
+      const count = radius > 8 ? 12 : 5;
+      const patches = new THREE.InstancedMesh(
+        getGeometry("paint-stroke", () => new THREE.BoxGeometry(0.72, 0.025, 0.22)),
+        getMaterial("paint-stroke", 0x83c653),
+        count
+      );
+      const transform = new THREE.Object3D();
+      for (let i = 0; i < count; i++) {
+        const angle = i * 2.399 + cx * 0.11;
+        const distance = radius * (0.18 + (i % 4) * 0.11);
+        transform.position.set(cx + Math.cos(angle) * distance, 0.52, cz + Math.sin(angle) * distance);
+        transform.rotation.set(0, angle, (i % 3 - 1) * 0.05);
+        transform.updateMatrix();
+        patches.setMatrixAt(i, transform.matrix);
+      }
+      scene.add(patches);
+    }
+
+    function createTree(x, y, z) {
+      const tree = new THREE.Group();
+      addBox(0, 1, 0, 0.55, 2, 0.55, getMaterial("trunk", 0x68442d), tree);
+      const crown = new THREE.Mesh(
+        getGeometry("crown", () => new THREE.IcosahedronGeometry(1.35, 1)),
+        getMaterial("leaves", 0x25854b)
+      );
+      crown.position.y = 2.85;
+      tree.add(crown);
+      tree.position.set(x, y, z);
+      tree.rotation.y = Math.sin(x * 13 + z * 7) * 0.2;
+      scene.add(tree);
+    }
+
+    function createBridge(startX, z, endX) {
+      const length = endX - startX;
+      addBox(startX + length / 2, -0.26, z, length, 0.28, 4.2, getMaterial("bridge", 0xb5824a));
+      for (let x = startX + 1; x < endX; x += 2) {
+        addBox(x, -0.04, z, 0.18, 0.12, 4.35, getMaterial("bridge-rail", 0x71472e));
+      }
+    }
+
+    function createBed(x, z, color) {
+      const bed = new THREE.Group();
+      addBox(0, 0.28, 0, 3.2, 0.35, 1.8, getMaterial("bed-frame", 0x68442d), bed);
+      addBox(0, 0.58, 0, 3, 0.42, 1.65, getMaterial(`bed-cover:${color}`, color), bed);
+      addBox(-1.05, 0.86, 0, 0.72, 0.18, 1.55, getMaterial("bed-pillow", 0xf6f0dc), bed);
+      addBox(-1.62, 0.42, 0, 0.16, 0.65, 1.95, getMaterial("bed-post", 0x9c6a43), bed);
+      bed.position.set(x, 0, z);
+      scene.add(bed);
+    }
+
+    function createChest(x, z) {
+      chestMesh = new THREE.Group();
+      addBox(0, 0.5, 0, 1.5, 1, 1.2, getMaterial("chest", 0x9b5429), chestMesh);
+      addBox(0, 1.08, 0, 1.58, 0.22, 1.28, getMaterial("chest-lid", 0xe7a542), chestMesh);
+      addBox(0, 0.72, 0.62, 0.22, 0.34, 0.05, getMaterial("chest-lock", 0xffdf70), chestMesh);
+      chestMesh.position.set(x, 0, z);
+      scene.add(chestMesh);
+    }
+
+    function create3DPlayer(id, skinId, name, isMe) {
+      const group = new THREE.Group();
+      
+      const colors = { red: 0xe74c3c, green: 0x2ecc71, yellow: 0xf1c40f, pink: 0xfd79a8, cyan: 0x00cec9, orange: 0xe67e22, default: 0x95a5a6, blue: 0x3498db };
+      const mainColor = colors[skinId] || colors.blue;
+      const body = new THREE.Group();
+      group.add(body);
+      const torso = addBox(0, 0.6, 0, 0.9, 1.15, 0.6, getMaterial(`player:${mainColor}`, mainColor), body);
+      const head = new THREE.Mesh(
+        getGeometry("player-head", () => new THREE.BoxGeometry(0.78, 0.78, 0.78)),
+        getMaterial("player-skin", 0xffcc99)
+      );
+      head.position.y = 1.55;
+      body.add(head);
+      addBox(-0.3, -0.4, 0, 0.34, 0.8, 0.4, getMaterial("player-pants", 0x33465b), body);
+      addBox(0.3, -0.4, 0, 0.34, 0.8, 0.4, sharedMaterials["player-pants"], body);
+      const leftArm = addBox(-0.58, 0.62, 0, 0.28, 0.85, 0.32, sharedMaterials[`player:${mainColor}`], body);
+      const rightArm = addBox(0.58, 0.62, 0, 0.28, 0.85, 0.32, sharedMaterials[`player:${mainColor}`], body);
+      const leftLeg = body.children[2];
+      const rightLeg = body.children[3];
+
+      const swordGroup = new THREE.Group();
+      addBox(0, 0.7, 0, 0.14, 1.2, 0.14, getMaterial("sword-blade", 0xd9e4ed), swordGroup);
+      addBox(0, 0.12, 0, 0.4, 0.14, 0.16, getMaterial("sword-hilt", 0xc47628), swordGroup);
+      swordGroup.position.set(0.67, 0.6, 0.2);
+      swordGroup.rotation.x = Math.PI / 4;
+      swordGroup.visible = false;
+      rightArm.add(swordGroup);
+      const axeGroup = new THREE.Group();
+      addBox(0, 0.56, 0, 0.14, 1.05, 0.14, getMaterial("axe-handle", 0x71472e), axeGroup);
+      addBox(0.18, 1.04, 0, 0.66, 0.45, 0.2, getMaterial("axe-head", 0xc9d2d7), axeGroup);
+      axeGroup.position.set(0.67, 0.52, 0.2);
+      axeGroup.rotation.x = Math.PI / 4;
+      axeGroup.visible = false;
+      rightArm.add(axeGroup);
+      group.userData.sword = swordGroup;
+      group.userData.axe = axeGroup;
+      group.userData.body = body;
+      group.userData.limbs = [leftArm, rightArm, leftLeg, rightLeg];
+      group.userData.isMe = isMe;
+      group.userData.step = Math.random() * Math.PI * 2;
+
+      group.position.set(0, 0, 0);
+      scene.add(group);
+      playerMeshes[id] = group;
+      return group;
+    }
+
+    function spawn3DBlock(x, z) {
+      const block = new THREE.Mesh(getGeometry("placed-block", () => new THREE.BoxGeometry(1.2, 1.2, 1.2)), getMaterial("placed-block", 0x9b653b));
+      block.position.set(x, 0.6, z);
+      scene.add(block);
+      blockMeshes.push(block);
+    }
+
+    function rebuild3DBlocks() {
+      blockMeshes.forEach(b => scene.remove(b));
+      blockMeshes = [];
+      gameState.blocks.forEach(b => spawn3DBlock(b.x, b.z));
+    }
+
+    function setupGameView() {
+      disposeThreeJS();
+      if (canvas2d && canvas2d.parentElement) canvas2d.parentElement.removeChild(canvas2d);
+      canvas2d = null;
+      ctx2d = null;
+      playerMeshes = {};
+      blockMeshes = [];
+      chestMesh = null;
+      const container = document.getElementById("canvas-container");
+      container.innerHTML = "";
+
+      if (gameMode === "2d") {
+        canvas2d = document.createElement("canvas");
+        canvas2d.id = "game-2d-canvas";
+        canvas2d.setAttribute("aria-label", "Two-dimensional WARS arena");
+        canvas2d.style.width = "100%";
+        canvas2d.style.height = "100%";
+        canvas2d.style.display = "block";
+        container.appendChild(canvas2d);
+        ctx2d = canvas2d.getContext("2d");
+        if (!ctx2d) {
+          document.getElementById("go-title").textContent = "2D NOT AVAILABLE";
+          document.getElementById("go-subtitle").textContent = "This browser could not start the 2D game canvas.";
+          document.getElementById("game-over-screen").classList.remove("hidden");
+          return;
+        }
+        window.addEventListener("resize", onWindowResize);
+        onWindowResize();
+        return;
+      }
+
+      initThreeJS();
+      if (!renderer) return;
+      for (const id in gameState.players) {
+        const player = gameState.players[id];
+        const mesh = create3DPlayer(id, player.skin, player.name, id === myPeerId);
+        const facingX = player.facingX === undefined ? 0 : player.facingX;
+        const facingZ = player.facingZ === undefined ? 1 : player.facingZ;
+        mesh.rotation.y = Math.atan2(facingX, facingZ);
+        mesh.userData.sword.visible = !!player.hasSword;
+        mesh.userData.axe.visible = !!player.hasAxe;
+      }
+      rebuild3DBlocks();
+      if (chestMesh) chestMesh.visible = !gameState.chests[0].opened;
+    }
+
+    function startGameEngine() {
+      gameState.players = {};
+      gameState.blocks = [];
+      gameState.chests[0].opened = false;
+      gameState.tokens = 500;
+      gameState.bedHp = 100; gameState.enemyBedHp = 100;
+      isGameOver = false;
+      isShopOpen = false;
+      isSettingsOpen = false;
+      document.getElementById("game-over-screen").classList.add("hidden");
+      document.getElementById("shop-menu").classList.add("hidden");
+      document.getElementById("settings-menu").classList.add("hidden");
+      document.getElementById("hud-tokens").textContent = gameState.tokens;
+      document.getElementById("hud-blocks").textContent = "0";
+      document.getElementById("own-bed-hp").textContent = gameState.bedHp;
+      document.getElementById("enemy-bed-hp").textContent = gameState.enemyBedHp;
+      playerMeshes = {};
+      blockMeshes = [];
+
+      gameState.players[myPeerId] = { x: MAP.spawn.x, z: MAP.spawn.z, dir: "right", facingX: 1, facingZ: 0, isMe: true, skin: currentSkin, name: getMyName(), hp: 100, swingTimer: 0, hasSword: false, hasAxe: false, blocks: 0 };
+
+      let bc = 0;
+      for (const id in players) {
+        if (players[id].isBot) {
+          const angle = (bc / Math.max(1, Object.keys(players).length)) * Math.PI * 2;
+          const bx = MAP.enemy.x + Math.cos(angle) * 3;
+          const bz = MAP.enemy.z + Math.sin(angle) * 3;
+          gameState.players[id] = { x: bx, z: bz, dir: "left", facingX: -1, facingZ: 0, isMe: false, skin: players[id].skin, name: players[id].username, hp: 100, swingTimer: 0, blocks: 0, isBot: true, vx: -1.5, vz: 0 };
+          bc++;
+        }
+      }
+
+      setupGameView();
+      if (gameMode === "3d" && !renderer) return;
+      lastTime = performance.now();
+      lastMoveTime = 0;
+      gameLoopId = requestAnimationFrame(gameLoop);
+      tokenIntervalId = window.setInterval(() => {
+        if (!isGameOver && document.getElementById("game").classList.contains("hidden") === false) {
+          gameState.tokens += 5;
+          document.getElementById("hud-tokens").textContent = gameState.tokens;
+        }
+      }, 1000);
+    }
+
+    function stopGameEngine() {
+      if (gameLoopId) cancelAnimationFrame(gameLoopId);
+      gameLoopId = null;
+      if (tokenIntervalId) clearInterval(tokenIntervalId);
+      tokenIntervalId = null;
+      disposeThreeJS();
+      window.removeEventListener("resize", onWindowResize);
+      if (canvas2d && canvas2d.parentElement) canvas2d.parentElement.removeChild(canvas2d);
+      canvas2d = null;
+      ctx2d = null;
+      document.getElementById("canvas-container").innerHTML = "";
+      for (const key in moveInput) moveInput[key] = 0;
+      for (const key in keys) keys[key] = false;
+    }
+
+    function disposeThreeJS() {
+      window.removeEventListener("resize", onWindowResize);
+      if (renderer) {
+        renderer.dispose();
+        renderer.forceContextLoss();
+        if (renderer.domElement.parentElement) renderer.domElement.parentElement.removeChild(renderer.domElement);
+        renderer = null;
+      }
+      if (scene) {
+        scene.traverse(object => {
+          if (object.isMesh && object.geometry && !Object.values(sharedGeometry).includes(object.geometry)) object.geometry.dispose();
+        });
+        scene.clear();
+        scene = null;
+      }
+      camera = null;
+      playerMeshes = {};
+      blockMeshes = [];
+      chestMesh = null;
+    }
+
+    function gameLoop(time) {
+      gameLoopId = requestAnimationFrame(gameLoop);
+      const dt = Math.min((time - lastTime) / 1000, 0.1); lastTime = time;
+      try {
+        if (!isShopOpen && !isSettingsOpen && !isGameOver) updateGame(dt);
+        if (time - lastMoveTime > 50) {
+          if (isHost) {
+            for (const id in connections) {
+              if (!players[id] || players[id].isBot) continue;
+              try { connections[id].send({ type: "gameState", state: gameState.players, bedHp: gameState.bedHp, enemyBedHp: gameState.enemyBedHp, blocks: gameState.blocks }); } catch (e) { console.error("Failed to sync game state:", e); }
+            }
+          } else if (connections[hostId] && gameState.players[myPeerId]) {
+            try { connections[hostId].send({ type: "playerMove", id: myPeerId, x: gameState.players[myPeerId].x, z: gameState.players[myPeerId].z, hp: gameState.players[myPeerId].hp }); } catch (e) { console.error("Failed to send player position:", e); }
+          }
+          lastMoveTime = time;
+        }
+        if (gameMode === "2d") render2D(time);
+        else render3D(dt);
+      } catch(e) { console.error(e); }
+    }
+
+    function updateGame(dt) {
+      const me = gameState.players[myPeerId]; if (!me) return;
+      let moveX = 0, moveZ = 0, isAttacking = false;
+
+      if (keys["w"] || keys["arrowup"]) moveZ -= 1;
+      if (keys["s"] || keys["arrowdown"]) moveZ += 1;
+      if (keys["a"] || keys["arrowleft"]) moveX -= 1;
+      if (keys["d"] || keys["arrowright"]) moveX += 1;
+      moveX += moveInput.x;
+      moveZ += moveInput.z;
+      if (keys[" "]) isAttacking = true;
+      if (keys["f"] && !keys._placeWasDown) { placeBlock3D(); keys._placeWasDown = true; }
+      if (!keys["f"]) keys._placeWasDown = false;
+
+      const magnitude = Math.hypot(moveX, moveZ);
+      if (magnitude > 1) { moveX /= magnitude; moveZ /= magnitude; }
+      const nextX = me.x + moveX * PLAYER_SPEED * dt;
+      const nextZ = me.z + moveZ * PLAYER_SPEED * dt;
+      if (isSafe3D(nextX, me.z)) me.x = nextX;
+      if (isSafe3D(me.x, nextZ)) me.z = nextZ;
+      if (moveX || moveZ) {
+        me.facingX = moveX;
+        me.facingZ = moveZ;
+        const mesh = playerMeshes[myPeerId];
+        if (mesh) mesh.rotation.y = Math.atan2(moveX, moveZ);
+      }
+
+      if (me.swingTimer > 0) me.swingTimer -= dt;
+      if (isAttacking && me.swingTimer <= 0) {
+        me.swingTimer = me.hasSword ? 0.3 : 0.5;
+        if(playerMeshes[myPeerId]) {
+           let sword = playerMeshes[myPeerId].userData.sword;
+           if(sword.visible) {
+              sword.rotation.z = -Math.PI/2;
+              setTimeout(()=> { if(sword) sword.rotation.z = 0; }, 150);
+           }
+        }
+        let dmg = me.hasAxe ? 35 : (me.hasSword ? 20 : 10);
+        
+        for (const id in gameState.players) {
+          if (id === myPeerId) continue; const target = gameState.players[id];
+          if (Math.hypot(me.x - target.x, me.z - target.z) < (me.hasAxe ? 3.5 : 3) && target.hp > 0) {
+            target.hp -= dmg;
+            if (target.hp <= 0 && gameState.enemyBedHp > 0) { target.hp = 100; target.x = MAP.enemy.x; target.z = MAP.enemy.z; }
+          }
+        }
+        if (Math.hypot(me.x - (MAP.enemy.x - 5.5), me.z - MAP.enemy.z) < 3) {
+          gameState.enemyBedHp = Math.max(0, gameState.enemyBedHp - dmg);
+          document.getElementById("enemy-bed-hp").textContent = gameState.enemyBedHp;
+          checkGameOver3D();
+        }
+      }
+
+      for (const id in gameState.players) {
+        const p = gameState.players[id]; if (id === myPeerId || p.hp <= 0) continue;
+        if (p.isBot) {
+            const playerDistance = Math.hypot(me.x - p.x, me.z - p.z);
+            const bedX = MAP.spawn.x + 5.5;
+            const bedDistance = Math.hypot(bedX - p.x, MAP.spawn.z - p.z);
+            const target = playerDistance < 12 ? me : { x: bedX, z: MAP.spawn.z };
+            const dx = target.x - p.x, dz = target.z - p.z;
+            const dist = Math.hypot(dx, dz);
+            if (dist > 0.01 && dist < 40) {
+                const stepX = (dx / dist) * 3 * dt;
+                const stepZ = (dz / dist) * 3 * dt;
+                if (isSafe3D(p.x + stepX, p.z)) p.x += stepX;
+                if (isSafe3D(p.x, p.z + stepZ)) p.z += stepZ;
+                if (Math.abs(stepX) > Math.abs(stepZ)) {
+                  p.facingX = Math.sign(stepX);
+                  p.facingZ = 0;
+                } else if (stepZ !== 0) {
+                  p.facingX = 0;
+                  p.facingZ = Math.sign(stepZ);
+                }
+                if (playerDistance < 2 && p.swingTimer <= 0) {
+                  p.swingTimer = 0.5;
+                  me.hp -= 10;
+                  if (me.hp <= 0) { me.hp = 100; me.x = MAP.spawn.x; me.z = MAP.spawn.z; }
+                }
+            }
+            if (bedDistance < 2.2 && p.swingTimer <= 0 && gameState.bedHp > 0) {
+              p.swingTimer = 0.5;
+              gameState.bedHp = Math.max(0, gameState.bedHp - 10);
+              document.getElementById("own-bed-hp").textContent = gameState.bedHp;
+              checkGameOver3D();
+            }
+            if (p.swingTimer > 0) p.swingTimer -= dt;
+        }
+      }
+      
+      // Chest check
+      if (!gameState.chests[0].opened) {
+          if(Math.hypot(me.x - MAP.mid.x, me.z - MAP.mid.z) < 3) {
+             if(keys["f"] || keys[" "]) {
+                 gameState.chests[0].opened = true;
+                 gameState.tokens += 100;
+                 document.getElementById("hud-tokens").textContent = gameState.tokens;
+                 if (chestMesh) chestMesh.visible = false;
+             }
+          }
+      }
+    }
+
+    function isSafe3D(x, z) {
+      if (Math.hypot(x - MAP.spawn.x, z - MAP.spawn.z) < ARENA_RADIUS - 0.6) return true;
+      if (Math.hypot(x - MAP.enemy.x, z - MAP.enemy.z) < ARENA_RADIUS - 0.6) return true;
+      if (Math.hypot(x - MAP.mid.x, z - MAP.mid.z) < 3.8) return true;
+      if (x >= MAP.spawn.x + ARENA_RADIUS - 1 && x <= MAP.enemy.x - ARENA_RADIUS + 1 && Math.abs(z) < 1.6) return true;
+      for (const b of gameState.blocks) { if (Math.hypot(x - b.x, z - b.z) < 1.2) return true; }
+      return false;
+    }
+
+    function placeBlock3D() {
+      if(isShopOpen || isSettingsOpen || isGameOver) return;
+      const me = gameState.players[myPeerId]; if(!me || !me.blocks || me.blocks <= 0) return;
+      
+      const bx = Math.round(me.x + (me.facingX || 0) * 1.7);
+      const bz = Math.round(me.z + (me.facingZ || 1) * 1.7);
+      if (!isSafe3D(bx, bz) && !gameState.blocks.some(b => b.x === bx && b.z === bz)) {
+          me.blocks--; document.getElementById("hud-blocks").textContent=me.blocks;
+          gameState.blocks.push({x: bx, z: bz});
+          if (gameMode === "3d") spawn3DBlock(bx, bz);
+          if(isHost) for(const id in connections) try{connections[id].send({type:"blockPlaced",block:{x:bx,z:bz}});}catch(e){}
+          else connections[hostId]?.send({type:"placeBlock",block:{x:bx,z:bz}});
+      }
+    }
+
+    function render3D(dt) {
+      if(!renderer || !camera) return;
+      const me = gameState.players[myPeerId]; if (!me) return;
+      
+      for (let id in playerMeshes) {
+         if(!gameState.players[id]) continue;
+         const state = gameState.players[id];
+         const mesh = playerMeshes[id];
+         mesh.position.set(state.x, 0, state.z);
+         const moving = id === myPeerId ? (moveInput.x || moveInput.z || keys["w"] || keys["a"] || keys["s"] || keys["d"] || keys["arrowup"] || keys["arrowdown"] || keys["arrowleft"] || keys["arrowright"]) : !!state.isBot;
+         mesh.userData.step += dt * (moving ? 11 : 2);
+         const swing = state.swingTimer > 0 ? Math.sin(Math.min(state.swingTimer / 0.18, 1) * Math.PI) * 0.45 : 0;
+         const walk = moving ? Math.sin(mesh.userData.step) * 0.42 : 0;
+         mesh.userData.limbs[0].rotation.x = walk + swing;
+         mesh.userData.limbs[1].rotation.x = -walk - swing;
+         mesh.userData.limbs[2].rotation.x = -walk;
+         mesh.userData.limbs[3].rotation.x = walk;
+         if (id !== myPeerId && state.isBot) mesh.rotation.y = Math.atan2(me.x - state.x, me.z - state.z);
+      }
+
+      const target = playerMeshes[myPeerId].position;
+      if (currentCamera === "first") {
+        const mesh = playerMeshes[myPeerId];
+        const direction = new THREE.Vector3(Math.sin(mesh.rotation.y), 0, Math.cos(mesh.rotation.y));
+        camera.position.set(target.x - direction.x * 11, 8, target.z - direction.z * 11);
+        camera.lookAt(target.x + direction.x * 3, 1, target.z + direction.z * 3);
+      } else {
+        camera.position.set(target.x + 18, 23, target.z + 25);
+        camera.lookAt(target.x, 0, target.z);
+      }
+
+      renderer.render(scene, camera);
+    }
+
+    function render2D(time) {
+      if (!ctx2d || !canvas2d) return;
+      const player = gameState.players[myPeerId];
+      if (!player) return;
+      const ctx = ctx2d;
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+      const scale = Math.min((width - 56) / 52, (height - 180) / 38);
+      const centerX = width / 2;
+      const centerY = height / 2;
+      const point = (x, z) => ({ x: centerX + x * scale, y: centerY + z * scale });
+      ctx.clearRect(0, 0, width, height);
+      ctx.fillStyle = "#80d9ef";
+      ctx.fillRect(0, 0, width, height);
+
+      ctx.strokeStyle = "rgba(255,255,255,0.28)";
+      ctx.lineWidth = 2;
+      for (let i = 0; i < 13; i++) {
+        const x = (i * 139 + 37) % width;
+        const y = (i * 97 + 23) % height;
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.quadraticCurveTo(x + 16, y - 4, x + 34, y);
+        ctx.stroke();
+      }
+
+      drawIsland2D(MAP.spawn.x, MAP.spawn.z, 10, scale, point, 0);
+      drawIsland2D(MAP.enemy.x, MAP.enemy.z, 10, scale, point, 1);
+      drawIsland2D(MAP.mid.x, MAP.mid.z, 4.4, scale, point, 2);
+
+      const bridgeStart = MAP.spawn.x + ARENA_RADIUS - 0.5;
+      const bridgeEnd = MAP.enemy.x - ARENA_RADIUS + 0.5;
+      const bridgeTop = point(bridgeStart, -2.1);
+      const bridgeBottom = point(bridgeEnd, 2.1);
+      ctx.fillStyle = "#71472e";
+      ctx.fillRect(bridgeTop.x, bridgeTop.y, bridgeBottom.x - bridgeTop.x, bridgeBottom.y - bridgeTop.y);
+      ctx.strokeStyle = "#241b17";
+      ctx.lineWidth = 3;
+      ctx.strokeRect(bridgeTop.x, bridgeTop.y, bridgeBottom.x - bridgeTop.x, bridgeBottom.y - bridgeTop.y);
+      ctx.strokeStyle = "#c89555";
+      ctx.lineWidth = Math.max(2, scale * 0.11);
+      for (let x = bridgeStart + 0.8; x < bridgeEnd; x += 1.4) {
+        const top = point(x, -1.95);
+        const bottom = point(x, 1.95);
+        ctx.beginPath();
+        ctx.moveTo(top.x, top.y);
+        ctx.lineTo(bottom.x, bottom.y);
+        ctx.stroke();
+      }
+
+      drawBed2D(MAP.spawn.x + 5.5, 0, "#287ed1", scale, point);
+      drawBed2D(MAP.enemy.x - 5.5, 0, "#df4e46", scale, point);
+      if (!gameState.chests[0].opened) drawChest2D(scale, point);
+
+      for (const block of gameState.blocks) {
+        const p = point(block.x, block.z);
+        const size = scale * 1.1;
+        ctx.fillStyle = "#9b653b";
+        ctx.fillRect(p.x - size / 2, p.y - size / 2, size, size);
+        ctx.strokeStyle = "#281b13";
+        ctx.lineWidth = 3;
+        ctx.strokeRect(p.x - size / 2, p.y - size / 2, size, size);
+        ctx.beginPath();
+        ctx.moveTo(p.x - size / 2, p.y - size / 2);
+        ctx.lineTo(p.x + size / 2, p.y + size / 2);
+        ctx.moveTo(p.x + size / 2, p.y - size / 2);
+        ctx.lineTo(p.x - size / 2, p.y + size / 2);
+        ctx.stroke();
+      }
+
+      const playersByDepth = Object.keys(gameState.players).sort((a, b) => gameState.players[a].z - gameState.players[b].z);
+      for (const id of playersByDepth) drawStickman2D(gameState.players[id], id === myPeerId, scale, point, time);
+    }
+
+    function drawIsland2D(x, z, radius, scale, point, seed) {
+      const p = point(x, z);
+      ctx2d.beginPath();
+      ctx2d.arc(p.x, p.y + scale * 0.16, (radius + 0.75) * scale, 0, Math.PI * 2);
+      ctx2d.fillStyle = "#79513b";
+      ctx2d.fill();
+      ctx2d.strokeStyle = "#241b17";
+      ctx2d.lineWidth = Math.max(3, scale * 0.22);
+      ctx2d.stroke();
+
+      ctx2d.beginPath();
+      ctx2d.arc(p.x, p.y, radius * scale, 0, Math.PI * 2);
+      ctx2d.fillStyle = "#52a647";
+      ctx2d.fill();
+      ctx2d.strokeStyle = "#17351e";
+      ctx2d.lineWidth = Math.max(3, scale * 0.2);
+      ctx2d.stroke();
+
+      ctx2d.fillStyle = "rgba(173, 224, 92, 0.58)";
+      for (let i = 0; i < (radius > 5 ? 13 : 5); i++) {
+        const angle = i * 2.399 + seed;
+        const distance = radius * (0.18 + (i % 4) * 0.11);
+        const patch = point(x + Math.cos(angle) * distance, z + Math.sin(angle) * distance);
+        ctx2d.save();
+        ctx2d.translate(patch.x, patch.y);
+        ctx2d.rotate(angle);
+        ctx2d.fillRect(-scale * 0.36, -scale * 0.11, scale * 0.72, scale * 0.22);
+        ctx2d.restore();
+      }
+
+      if (radius > 5) {
+        const treeCount = radius > 15 ? 11 : 5;
+        for (let i = 0; i < treeCount; i++) {
+          const angle = (i / treeCount) * Math.PI * 2 + x * 0.17;
+          const distance = radius * (0.55 + (i % 3) * 0.08);
+          const tree = point(x + Math.cos(angle) * distance, z + Math.sin(angle) * distance);
+          ctx2d.fillStyle = "#68442d";
+          ctx2d.fillRect(tree.x - scale * 0.13, tree.y - scale * 0.13, scale * 0.26, scale * 0.26);
+          ctx2d.beginPath();
+          ctx2d.arc(tree.x, tree.y, scale * 0.78, 0, Math.PI * 2);
+          ctx2d.fillStyle = "#25854b";
+          ctx2d.fill();
+          ctx2d.strokeStyle = "#17351e";
+          ctx2d.lineWidth = Math.max(2, scale * 0.12);
+          ctx2d.stroke();
+          ctx2d.beginPath();
+          ctx2d.arc(tree.x - scale * 0.2, tree.y - scale * 0.2, scale * 0.3, 0, Math.PI * 2);
+          ctx2d.fillStyle = "rgba(180, 236, 112, 0.55)";
+          ctx2d.fill();
+        }
+      }
+    }
+
+    function drawBed2D(x, z, color, scale, point) {
+      const p = point(x, z);
+      const width = scale * 3.2;
+      const height = scale * 1.8;
+      ctx2d.fillStyle = "#68442d";
+      ctx2d.fillRect(p.x - width / 2, p.y - height / 2, width, height);
+      ctx2d.fillStyle = color;
+      ctx2d.fillRect(p.x - width / 2 + 3, p.y - height / 2 + 3, width - 6, height - 6);
+      ctx2d.fillStyle = "#fff2d6";
+      ctx2d.fillRect(p.x - width / 2 + 4, p.y - height / 2 + 4, width * 0.23, height - 8);
+      ctx2d.strokeStyle = "#171412";
+      ctx2d.lineWidth = Math.max(2, scale * 0.15);
+      ctx2d.strokeRect(p.x - width / 2, p.y - height / 2, width, height);
+    }
+
+    function drawChest2D(scale, point) {
+      const p = point(MAP.mid.x, MAP.mid.z);
+      const size = scale * 1.5;
+      ctx2d.fillStyle = "#8b4d2a";
+      ctx2d.fillRect(p.x - size / 2, p.y - size / 2, size, size);
+      ctx2d.fillStyle = "#e7a542";
+      ctx2d.fillRect(p.x - size / 2 + 3, p.y - size / 2 + 3, size - 6, size - 6);
+      ctx2d.strokeStyle = "#21170f";
+      ctx2d.lineWidth = Math.max(2, scale * 0.13);
+      ctx2d.strokeRect(p.x - size / 2, p.y - size / 2, size, size);
+      ctx2d.fillStyle = "#fff0a8";
+      ctx2d.fillRect(p.x - scale * 0.08, p.y - scale * 0.1, scale * 0.16, scale * 0.3);
+    }
+
+    function drawStickman2D(player, isMe, scale, point, time) {
+      const p = point(player.x, player.z);
+      const colors = { default: "#536d80", red: "#e74c3c", blue: "#3498db", green: "#2ecc71", yellow: "#f1c40f", pink: "#fd79a8", cyan: "#00cec9", orange: "#e67e22" };
+      const color = colors[player.skin] || colors.blue;
+      const size = Math.max(12, scale * 0.85);
+      const moving = player.isBot || (isMe && (moveInput.x || moveInput.z || keys.w || keys.a || keys.s || keys.d || keys.arrowup || keys.arrowdown || keys.arrowleft || keys.arrowright));
+      const stride = moving ? Math.sin(time / 75 + (isMe ? 0 : player.x)) * size * 0.7 : 0;
+      const facingX = player.facingX === undefined ? (player.dir === "left" ? -1 : 1) : player.facingX;
+      const facingZ = player.facingZ === undefined ? 0 : player.facingZ;
+      const swing = player.swingTimer > 0 ? Math.sin(Math.min(player.swingTimer / 0.18, 1) * Math.PI) : 0;
+
+      ctx2d.save();
+      ctx2d.translate(p.x, p.y);
+      ctx2d.lineCap = "round";
+      ctx2d.lineJoin = "round";
+      ctx2d.lineWidth = size * 0.32;
+      ctx2d.strokeStyle = "#171412";
+
+      ctx2d.beginPath();
+      ctx2d.moveTo(0, -size * 0.65);
+      ctx2d.lineTo(0, size * 0.2);
+      ctx2d.moveTo(0, -size * 0.3);
+      ctx2d.lineTo(-size * 0.52, -size * 0.02 + stride * 0.35);
+      ctx2d.moveTo(0, -size * 0.3);
+      ctx2d.lineTo(size * 0.52, -size * 0.02 - stride * 0.35);
+      ctx2d.moveTo(0, size * 0.18);
+      ctx2d.lineTo(-size * 0.38 + stride, size * 0.72);
+      ctx2d.moveTo(0, size * 0.18);
+      ctx2d.lineTo(size * 0.38 - stride, size * 0.72);
+      ctx2d.stroke();
+
+      ctx2d.strokeStyle = color;
+      ctx2d.lineWidth = size * 0.2;
+      ctx2d.stroke();
+
+      ctx2d.beginPath();
+      ctx2d.arc(0, -size * 0.95, size * 0.3, 0, Math.PI * 2);
+      ctx2d.fillStyle = "#ffcc99";
+      ctx2d.fill();
+      ctx2d.strokeStyle = "#171412";
+      ctx2d.lineWidth = Math.max(1.5, size * 0.08);
+      ctx2d.stroke();
+      ctx2d.fillStyle = "#171412";
+      ctx2d.beginPath();
+      ctx2d.arc(facingX * size * 0.1 - facingZ * size * 0.1, -size * 0.98, Math.max(1, size * 0.035), 0, Math.PI * 2);
+      ctx2d.fill();
+
+      if (player.hasSword || player.hasAxe) {
+        const weaponX = facingX * size * 0.9 - facingZ * size * 0.55;
+        const weaponY = -facingZ * size * 0.9 - facingX * size * 0.55;
+        ctx2d.strokeStyle = player.hasAxe ? "#c8d4dc" : "#eef6fb";
+        ctx2d.lineWidth = Math.max(2, size * 0.12);
+        ctx2d.beginPath();
+        ctx2d.moveTo(facingX * size * 0.3, -size * 0.08);
+        ctx2d.lineTo(weaponX + swing * size, weaponY - swing * size);
+        ctx2d.stroke();
+      }
+
+      ctx2d.font = `bold ${Math.max(10, size * 0.72)}px 'VT323', monospace`;
+      ctx2d.textAlign = "center";
+      ctx2d.lineWidth = 3;
+      ctx2d.strokeStyle = "#171412";
+      ctx2d.strokeText(player.name || "Player", 0, -size * 1.38);
+      ctx2d.fillStyle = isMe ? "#fff59d" : "#fff";
+      ctx2d.fillText(player.name || "Player", 0, -size * 1.38);
+
+      if (!isMe) {
+        const barWidth = size * 1.4;
+        const barY = -size * 1.22;
+        ctx2d.fillStyle = "#381d1d";
+        ctx2d.fillRect(-barWidth / 2, barY, barWidth, Math.max(2, size * 0.13));
+        ctx2d.fillStyle = "#63d66b";
+        ctx2d.fillRect(-barWidth / 2, barY, barWidth * Math.max(0, player.hp) / 100, Math.max(2, size * 0.13));
+      }
+      ctx2d.restore();
+    }
+
+    function toggleShop(force) {
+      isShopOpen = typeof force === "boolean" ? force : !isShopOpen;
+      document.getElementById("shop-menu").classList.toggle("hidden", !isShopOpen);
+    }
+
+    function buySword() { const me=gameState.players[myPeerId]; if(!me || me.hasSword) return; if(gameState.tokens>=120){ gameState.tokens-=120; me.hasSword=true; if(playerMeshes[myPeerId]) playerMeshes[myPeerId].userData.sword.visible = true; document.getElementById("hud-tokens").textContent=gameState.tokens; toggleShop(); } }
+    function buyAxe() { const me=gameState.players[myPeerId]; if(!me || me.hasAxe) return; if(gameState.tokens>=250){ gameState.tokens-=250; me.hasAxe=true; if(playerMeshes[myPeerId]) playerMeshes[myPeerId].userData.axe.visible = true; document.getElementById("hud-tokens").textContent=gameState.tokens; toggleShop(); } }
+    function buyWood() { const me=gameState.players[myPeerId]; if(gameState.tokens>=25){ gameState.tokens-=25; me.blocks=(me.blocks||0)+5; document.getElementById("hud-tokens").textContent=gameState.tokens; document.getElementById("hud-blocks").textContent=me.blocks; toggleShop(); } }
+    
+    function checkGameOver3D() {
+      if (isGameOver) return;
+      if (gameState.enemyBedHp <= 0) {
+        isGameOver = true; document.getElementById("go-title").textContent = "VICTORY!"; document.getElementById("go-title").style.color = "#4caf50"; document.getElementById("go-subtitle").textContent = "You destroyed the enemy bed! Yay! :D"; document.getElementById("game-over-screen").classList.remove("hidden");
+      } else if (gameState.bedHp <= 0) {
+        isGameOver = true; document.getElementById("go-title").textContent = "AWH!"; document.getElementById("go-title").style.color = "#e74c3c"; document.getElementById("go-subtitle").textContent = "They destroyed your bed! Better luck next time!"; document.getElementById("game-over-screen").classList.remove("hidden");
+      }
+    }
+
+    window.addEventListener("keydown", e => {
+      const key = e.key.toLowerCase();
+      if ([" ", "arrowup", "arrowdown", "arrowleft", "arrowright"].includes(key)) e.preventDefault();
+      keys[key] = true;
+      if (key === "e" && !e.repeat) toggleShop();
+      if (key === "escape" && !e.repeat) toggleSettings();
+    });
+    window.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
+    
+    document.getElementById("btn-attack").onpointerdown = e => { e.preventDefault(); keys[" "]=true; };
+    document.getElementById("btn-attack").onpointerup = e => { e.preventDefault(); keys[" "]=false; };
+    document.getElementById("btn-attack").onpointerleave = e => { keys[" "]=false; };
+    document.getElementById("btn-shop-touch").onpointerdown = e => { e.preventDefault(); toggleShop(); };
+    document.getElementById("btn-place-touch").onpointerdown = e => { e.preventDefault(); placeBlock3D(); };
+
+    const joystickBase = document.getElementById("joystick-base");
+    const joystickStick = document.getElementById("joystick-stick");
+    function updateJoystick(event) {
+      const rect = joystickBase.getBoundingClientRect();
+      const radius = rect.width * 0.34;
+      const dx = event.clientX - (rect.left + rect.width / 2);
+      const dy = event.clientY - (rect.top + rect.height / 2);
+      const length = Math.hypot(dx, dy);
+      const scale = length > radius ? radius / length : 1;
+      const x = dx * scale, y = dy * scale;
+      moveInput.x = x / radius;
+      moveInput.z = y / radius;
+      joystickStick.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`;
+    }
+    function resetJoystick() {
+      moveInput.x = 0;
+      moveInput.z = 0;
+      joystickStick.style.transform = "translate(-50%, -50%)";
+    }
+    joystickBase.addEventListener("pointerdown", event => {
+      event.preventDefault();
+      joystickBase.setPointerCapture(event.pointerId);
+      updateJoystick(event);
+    });
+    joystickBase.addEventListener("pointermove", event => {
+      if (joystickBase.hasPointerCapture(event.pointerId)) updateJoystick(event);
+    });
+    joystickBase.addEventListener("pointerup", resetJoystick);
+    joystickBase.addEventListener("pointercancel", resetJoystick);
+
+    function onWindowResize() {
+      if (canvas2d && ctx2d) {
+         const pixelRatioCap = currentStyle === "pixelated" ? 0.72 : 1.5;
+         const pixelRatio = Math.min(window.devicePixelRatio || 1, pixelRatioCap);
+         canvas2d.width = Math.round(window.innerWidth * pixelRatio);
+         canvas2d.height = Math.round(window.innerHeight * pixelRatio);
+         ctx2d.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+      }
+      if (camera && renderer) {
+         camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix();
+         renderer.setSize(window.innerWidth, window.innerHeight);
+      }
+    }
+
+    drawSkins();
+  </script>
+</body>
+</html>
