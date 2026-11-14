@@ -181,11 +181,13 @@
     #player-hud.respawning #player-status { color: #ffe08a; }
     #game-hint { position: absolute; bottom: 18px; left: 50%; transform: translateX(-50%); z-index: 20; padding: 7px 12px; border: 2px solid rgba(255,255,255,0.65); border-radius: 8px; background: rgba(12,27,40,0.66); color: #fff; font: 18px 'VT323', monospace; text-align: center; white-space: nowrap; pointer-events: none; }
     @media (max-width: 600px) {
-      #objective-hud { top: 100px; font-size: 17px; }
-      #arena-name-hud { top: 66px; right: 12px; font-size: 15px; }
-      #player-hud { top: 158px; width: min(220px, calc(100vw - 40px)); }
-      #game-back { top: 236px; left: 20px; }
-      #game-hint { bottom: 10px; max-width: 88vw; white-space: normal; font-size: 15px; }
+      #token-hud { top: 12px; left: 12px; }
+      #objective-hud { top: 64px; left: 12px; right: 12px; width: auto; max-width: none; transform: none; justify-content: space-between; font-size: 14px; }
+      #arena-name-hud { top: 112px; right: 12px; font-size: 14px; }
+      #player-hud { top: 112px; left: 12px; width: min(190px, calc(100vw - 24px)); }
+      #game-back { top: 195px; left: 12px; }
+      #game-hint { bottom: 8px; max-width: 88vw; white-space: normal; font-size: 14px; }
+      #settings-menu { max-height: 90vh; overflow-y: auto; }
     }
 
     /* SHOP */
@@ -222,6 +224,8 @@
     .look-joystick-base::after { content: "LOOK"; position: absolute; top: 7px; left: 50%; transform: translateX(-50%); color: rgba(255,255,255,0.75); font: 16px 'VT323', monospace; pointer-events: none; }
     .look-joystick-stick { position: absolute; top: 50%; left: 50%; width: 50px; height: 50px; border-radius: 50%; background: rgba(255,255,255,0.5); transform: translate(-50%, -50%); pointer-events: none; }
     .action-btn { position: absolute; bottom: 190px; right: 80px; width: 64px; height: 64px; background: rgba(255,255,255,0.2); border: 3px solid rgba(255,255,255,0.5); border-radius: 50%; pointer-events: auto; display: flex; justify-content: center; align-items: center; color: #fff; font-family: 'VT323', monospace; font-size: 20px; touch-action: none; }
+    .dash-btn-touch { position: absolute; bottom: 270px; right: 150px; width: 56px; height: 56px; background: rgba(71, 183, 217, 0.82); border: 3px solid #205f76; border-radius: 50%; pointer-events: auto; display: flex; justify-content: center; align-items: center; color: #fff; font: 18px 'VT323', monospace; text-shadow: 1px 1px #17313b; touch-action: none; }
+    .dash-btn-touch:active { background: #35a9cb; transform: scale(0.94); }
     .shop-btn-touch { position: absolute; bottom: 270px; right: 80px; width: 54px; height: 54px; background: rgba(241, 196, 15, 0.8); border: 3px solid #f39c12; border-radius: 50%; pointer-events: auto; display: flex; justify-content: center; align-items: center; font-family: 'VT323', monospace; font-size: 18px; touch-action: none; }
     .place-btn-touch { position: absolute; bottom: 190px; left: 80px; width: 54px; height: 54px; background: rgba(142, 68, 173, 0.8); border: 3px solid #6c3483; border-radius: 50%; pointer-events: auto; display: flex; justify-content: center; align-items: center; color: #fff; font-family: 'VT323', monospace; font-size: 18px; touch-action: none; }
     #touch-controls.mode-2d #look-joystick-base { display: none; }
@@ -230,9 +234,19 @@
       .joystick-base, .look-joystick-base { width: 112px; height: 112px; bottom: 24px; }
       .joystick-base { left: 20px; }
       .look-joystick-base { right: 20px; }
-      .action-btn { right: 24px; bottom: 156px; }
-      .shop-btn-touch { right: 100px; bottom: 156px; }
-      .place-btn-touch { left: 100px; bottom: 156px; }
+      .action-btn { right: 24px; bottom: 148px; }
+      .dash-btn-touch { right: 94px; bottom: 220px; }
+      .shop-btn-touch { right: 24px; bottom: 220px; }
+      .place-btn-touch { left: 24px; bottom: 148px; }
+    }
+    @media (max-width: 390px) {
+      #objective-hud { left: 8px; right: 8px; gap: 4px; padding: 6px 5px; font-size: 12px; }
+      .objective-bed { gap: 2px; }
+      #token-hud { gap: 6px; padding: 6px 8px; font-size: 24px; }
+      #player-hud { top: 106px; width: min(170px, calc(100vw - 16px)); left: 8px; }
+      #arena-name-hud { top: 118px; right: 8px; }
+      .dash-btn-touch { right: 82px; }
+      #game-hint { top: 202px; bottom: auto; }
     }
 
     /* GAME OVER */
@@ -266,18 +280,18 @@
         </section>
         <section class="guide-section">
           <h3>FIGHT & BUILD</h3>
-          <p>Press Space or SWING to attack. Press F or PLACE to build with wood. Near the center chest, press F or SWING to open it.</p>
+          <p>Face your target and press Space or SWING to land a hit. Knockouts earn a reward. Use Shift or DASH to dodge through danger. Press F or PLACE to build with wood.</p>
         </section>
         <section class="guide-section">
           <h3>SHOP & SURVIVE</h3>
-          <p>Press E or SHOP to buy a sword, axe, or blocks. Watch your health: a knockout means a short respawn, then a brief spawn shield.</p>
+          <p>Press E or SHOP to buy a sword, axe, or blocks. Press F at the unopened center chest to loot it. A knockout means a short respawn, then a brief spawn shield.</p>
         </section>
         <section class="guide-section">
           <h3>CHOOSE YOUR GAME</h3>
           <p>Pick 2D Stickmen or 3D Island Arena in the lobby or settings. In 3D, choose Sky Garden, Ember Rift, or Frostwood Peaks. Run across glowing rings for a speed boost. Choose Web for bots, or host a room and share its code.</p>
         </section>
       </div>
-      <p class="guide-tip">TIP: Your base forge earns 8 tokens each second. Loot the middle chest for 80 tokens and an emerald; more emeralds spawn in the center. Spend emeralds on a stronger blade or bed plating.</p>
+      <p class="guide-tip">TIP: Your base forge earns 5 tokens each second. Loot the middle chest for 80 tokens and an emerald; more emeralds spawn in the center. Spend emeralds on a stronger blade or bed plating.</p>
     </div>
   </div>
   
@@ -463,9 +477,9 @@
       <div class="health-track" role="progressbar" aria-label="Player health" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100">
         <div id="player-hp-fill"></div>
       </div>
-      <div id="player-status">READY</div>
+      <div id="player-status">DASH READY · KOs 0</div>
     </div>
-    <div id="game-hint">WASD / ARROWS MOVE · SPACE SWING · E SHOP · F BUILD / LOOT · COLLECT EMERALDS MID · ? GUIDE</div>
+    <div id="game-hint">WASD MOVE · SPACE SWING · SHIFT DASH · E SHOP · F BUILD / LOOT · ? GUIDE</div>
 
     <div id="shop-menu" class="hidden">
       <img src="assets/shop.png" class="shop-header-img" alt="Shop">
@@ -520,6 +534,7 @@
       <div class="joystick-base" id="joystick-base"><div class="joystick-stick" id="joystick-stick"></div></div>
       <div class="look-joystick-base" id="look-joystick-base" aria-label="Look around"><div class="look-joystick-stick" id="look-joystick-stick"></div></div>
       <div class="action-btn" id="btn-attack">SWING</div>
+      <button class="dash-btn-touch" id="btn-dash-touch" type="button" aria-label="Dash">DASH</button>
       <div class="shop-btn-touch" id="btn-shop-touch">SHOP</div>
       <div class="place-btn-touch" id="btn-place-touch">PLACE</div>
     </div>
@@ -704,7 +719,7 @@
               else gameState.players[id] = incoming;
             } else if (gameState.players[id]) {
               const local = gameState.players[id];
-              for (const key of ["hp", "respawnTimer", "invulnerabilityTimer", "team", "hasSword", "hasAxe", "hasEmeraldBlade", "blocks", "eliminated"]) {
+              for (const key of ["hp", "respawnTimer", "invulnerabilityTimer", "team", "hasSword", "hasAxe", "hasEmeraldBlade", "blocks", "eliminated", "kills"]) {
                 if (incoming[key] !== undefined) local[key] = incoming[key];
               }
             }
@@ -715,6 +730,8 @@
         if (data.type === "playerMove" && isHost && data.id === conn.peer && gameState.players[data.id] && Number.isFinite(data.x) && Number.isFinite(data.z)) {
           const remote = gameState.players[data.id];
           remote.x = data.x; remote.z = data.z;
+          if (Number.isFinite(data.facingX)) remote.facingX = data.facingX;
+          if (Number.isFinite(data.facingZ)) remote.facingZ = data.facingZ;
           if (Number.isFinite(data.hp)) remote.hp = data.hp;
           if (Number.isFinite(data.respawnTimer)) remote.respawnTimer = data.respawnTimer;
         }
@@ -1416,7 +1433,7 @@
       playerMeshes = {};
       blockMeshes = [];
 
-      gameState.players[myPeerId] = { id: myPeerId, team: "blue", x: MAP.spawn.x, z: MAP.spawn.z, dir: "right", facingX: 1, facingZ: 0, isMe: true, skin: currentSkin, name: getMyName(), hp: MAX_PLAYER_HP, respawnTimer: 0, invulnerabilityTimer: 0, swingTimer: 0, boostTimer: 0, boostCooldown: 0, boostDirection: 1, hasSword: false, hasAxe: false, hasEmeraldBlade: false, blocks: 0 };
+      gameState.players[myPeerId] = { id: myPeerId, team: "blue", x: MAP.spawn.x, z: MAP.spawn.z, dir: "right", facingX: 1, facingZ: 0, isMe: true, skin: currentSkin, name: getMyName(), hp: MAX_PLAYER_HP, respawnTimer: 0, invulnerabilityTimer: 0, swingTimer: 0, boostTimer: 0, boostCooldown: 0, boostDirection: 1, dashTimer: 0, dashCooldown: 0, kills: 0, hasSword: false, hasAxe: false, hasEmeraldBlade: false, blocks: 0 };
       updatePlayerHud(gameState.players[myPeerId]);
 
       let bc = 0;
@@ -1425,7 +1442,7 @@
           const angle = (bc / Math.max(1, Object.keys(players).length)) * Math.PI * 2;
           const bx = MAP.enemy.x + Math.cos(angle) * 3;
           const bz = MAP.enemy.z + Math.sin(angle) * 3;
-          gameState.players[id] = { id, team: "red", x: bx, z: bz, dir: "left", facingX: -1, facingZ: 0, isMe: false, skin: players[id].skin, name: players[id].username, hp: MAX_PLAYER_HP, respawnTimer: 0, invulnerabilityTimer: 0, swingTimer: 0, blocks: 0, isBot: true, botRole: bc === 0 ? "raider" : bc === 1 ? "scout" : "guard" };
+          gameState.players[id] = { id, team: "red", x: bx, z: bz, dir: "left", facingX: -1, facingZ: 0, isMe: false, skin: players[id].skin, name: players[id].username, hp: MAX_PLAYER_HP, respawnTimer: 0, invulnerabilityTimer: 0, swingTimer: 0, attackWindup: 0, attackCooldown: 0, dashTimer: 0, dashCooldown: 0, kills: 0, blocks: 0, isBot: true, botRole: bc === 0 ? "raider" : bc === 1 ? "scout" : "guard" };
           bc++;
         }
       }
@@ -1440,7 +1457,7 @@
           dir: "right", facingX: 1, facingZ: 0, isMe: false,
           skin: players[id].skin, name: players[id].username,
           hp: MAX_PLAYER_HP, respawnTimer: 0, invulnerabilityTimer: 0,
-          swingTimer: 0, blocks: 0, hasSword: false, hasAxe: false,
+          swingTimer: 0, dashTimer: 0, dashCooldown: 0, kills: 0, blocks: 0, hasSword: false, hasAxe: false,
           hasEmeraldBlade: false, isBot: false
         };
       }
@@ -1505,7 +1522,7 @@
               try { connections[id].send({ type: "gameState", state: gameState.players, bedHp: gameState.bedHp, enemyBedHp: gameState.enemyBedHp, blocks: gameState.blocks, tokens: gameState.tokens, emeralds: gameState.emeralds, blueBedShield: gameState.blueBedShield, redBedShield: gameState.redBedShield, pickups: gameState.pickups, chests: gameState.chests, result: gameState.result }); } catch (e) { console.error("Failed to sync game state:", e); }
             }
           } else if (connections[hostId] && gameState.players[myPeerId]) {
-              try { connections[hostId].send({ type: "playerMove", id: myPeerId, x: gameState.players[myPeerId].x, z: gameState.players[myPeerId].z, hp: gameState.players[myPeerId].hp, respawnTimer: gameState.players[myPeerId].respawnTimer }); } catch (e) { console.error("Failed to send player position:", e); }
+              try { connections[hostId].send({ type: "playerMove", id: myPeerId, x: gameState.players[myPeerId].x, z: gameState.players[myPeerId].z, facingX: gameState.players[myPeerId].facingX, facingZ: gameState.players[myPeerId].facingZ, hp: gameState.players[myPeerId].hp, respawnTimer: gameState.players[myPeerId].respawnTimer }); } catch (e) { console.error("Failed to send player position:", e); }
           }
           lastMoveTime = time;
         }
@@ -1527,7 +1544,11 @@
           ? `SHIELDED · ${player.invulnerabilityTimer.toFixed(1)}s`
           : player.boostTimer > 0
             ? "SPEED BOOST!"
-          : "READY";
+          : player.dashTimer > 0
+            ? "DASH!"
+            : player.dashCooldown > 0
+              ? `DASH · ${player.dashCooldown.toFixed(1)}s · KOs ${player.kills || 0}`
+              : `DASH READY · KOs ${player.kills || 0}`;
       if (playerStatus.textContent !== nextStatus) playerStatus.textContent = nextStatus;
     }
 
@@ -1543,6 +1564,8 @@
       me.invulnerabilityTimer = Math.max(0, (me.invulnerabilityTimer || 0) - dt);
       me.boostTimer = Math.max(0, (me.boostTimer || 0) - dt);
       me.boostCooldown = Math.max(0, (me.boostCooldown || 0) - dt);
+      me.dashTimer = Math.max(0, (me.dashTimer || 0) - dt);
+      me.dashCooldown = Math.max(0, (me.dashCooldown || 0) - dt);
       cameraLook.yaw = (cameraLook.yaw + lookInput.x * dt * CAMERA_LOOK_YAW_SPEED) % (Math.PI * 2);
       cameraLook.pitch = Math.max(-0.75, Math.min(0.75, cameraLook.pitch - lookInput.y * dt * CAMERA_LOOK_PITCH_SPEED));
       if (me.respawnTimer > 0) {
@@ -1558,6 +1581,7 @@
       }
       updatePlayerHud(me);
       const canAct = me.respawnTimer <= 0;
+      if (!keys.shift) keys._dashWasDown = false;
       let moveX = 0, moveZ = 0, isAttacking = false;
 
       if (canAct) {
@@ -1583,6 +1607,16 @@
 
         const magnitude = Math.hypot(moveX, moveZ);
         if (magnitude > 1) { moveX /= magnitude; moveZ /= magnitude; }
+        if (keys.shift && !keys._dashWasDown) {
+          keys._dashWasDown = true;
+          if (me.dashCooldown <= 0) {
+            const facingLength = Math.hypot(me.facingX || 0, me.facingZ || 0);
+            me.dashX = magnitude > 0.1 ? moveX / magnitude : facingLength > 0 ? me.facingX / facingLength : 1;
+            me.dashZ = magnitude > 0.1 ? moveZ / magnitude : facingLength > 0 ? me.facingZ / facingLength : 0;
+            me.dashTimer = 0.18;
+            me.dashCooldown = 3;
+          }
+        }
         if (me.boostCooldown <= 0) {
           const pad = getBoostPads().find(candidate => Math.hypot(me.x - candidate.x, me.z - candidate.z) < 1.15);
           if (pad) {
@@ -1592,8 +1626,9 @@
           }
         }
         const boostStep = me.boostTimer > 0 ? me.boostDirection * PLAYER_SPEED * 1.6 * dt : 0;
-        const nextX = me.x + moveX * PLAYER_SPEED * dt + boostStep;
-        const nextZ = me.z + moveZ * PLAYER_SPEED * dt;
+        const dashStep = me.dashTimer > 0 ? 16 * dt : 0;
+        const nextX = me.x + moveX * PLAYER_SPEED * dt + boostStep + (me.dashX || 0) * dashStep;
+        const nextZ = me.z + moveZ * PLAYER_SPEED * dt + (me.dashZ || 0) * dashStep;
         if (isSafe3D(nextX, nextZ)) {
           me.x = nextX;
           me.z = nextZ;
@@ -1611,7 +1646,7 @@
 
       if (me.swingTimer > 0) me.swingTimer -= dt;
       if (canAct && isAttacking && me.swingTimer <= 0) {
-        me.swingTimer = me.hasSword ? 0.3 : 0.5;
+        me.swingTimer = me.hasSword ? 0.32 : 0.42;
         if(playerMeshes[myPeerId]) {
            let sword = playerMeshes[myPeerId].userData.sword;
            if(sword.visible) {
@@ -1624,7 +1659,11 @@
 
       for (const id in gameState.players) {
         const p = gameState.players[id]; if (id === myPeerId || p.hp <= 0) continue;
+        if (p.swingTimer > 0) p.swingTimer = Math.max(0, p.swingTimer - dt);
         if (p.isBot && isHost) {
+            const wasWindingUp = (p.attackWindup || 0) > 0;
+            p.attackCooldown = Math.max(0, (p.attackCooldown || 0) - dt);
+            p.attackWindup = Math.max(0, (p.attackWindup || 0) - dt);
             const playerDistance = Math.hypot(me.x - p.x, me.z - p.z);
             const blueBed = { x: MAP.spawn.x + 5.5, z: MAP.spawn.z };
             const redBed = { x: MAP.enemy.x - 5.5, z: MAP.enemy.z };
@@ -1651,16 +1690,18 @@
                 }
                 p.facingX = dx / dist;
                 p.facingZ = dz / dist;
-                if (playerDistance < 3.2 && p.swingTimer <= 0) {
-                  p.swingTimer = 0.75;
-                  if (me.invulnerabilityTimer <= 0 && me.respawnTimer <= 0 && window.WarsBedWars) window.WarsBedWars.damagePlayer(p, me, 12);
+                if (wasWindingUp && p.attackWindup === 0 && playerDistance < 3.2 && me.respawnTimer <= 0) {
+                  if (window.WarsBedWars) window.WarsBedWars.damagePlayer(p, me, 12);
+                } else if (!wasWindingUp && playerDistance < 3.2 && p.attackCooldown <= 0) {
+                  p.attackWindup = 0.32;
+                  p.attackCooldown = 0.9;
+                  p.swingTimer = 0.42;
                 }
             }
             if (bedDistance < 2.5 && p.swingTimer <= 0 && gameState.bedHp > 0) {
               p.swingTimer = 0.5;
               if (window.WarsBedWars) window.WarsBedWars.damageBed("blue", 10, id);
             }
-            if (p.swingTimer > 0) p.swingTimer -= dt;
         }
       }
       if (window.WarsBedWars) window.WarsBedWars.update(dt);
@@ -1716,9 +1757,9 @@
          const respawnTimer = state.respawnTimer || 0;
          const invulnerabilityTimer = state.invulnerabilityTimer || 0;
          mesh.visible = respawnTimer <= 0 && (invulnerabilityTimer <= 0 || Math.floor(performance.now() / 90) % 2 === 0);
-         const moving = id === myPeerId ? (moveInput.x || moveInput.z || keys["w"] || keys["a"] || keys["s"] || keys["d"] || keys["arrowup"] || keys["arrowdown"] || keys["arrowleft"] || keys["arrowright"]) : !!state.isBot;
+         const moving = id === myPeerId ? (state.dashTimer > 0 || moveInput.x || moveInput.z || keys["w"] || keys["a"] || keys["s"] || keys["d"] || keys["arrowup"] || keys["arrowdown"] || keys["arrowleft"] || keys["arrowright"]) : !!state.isBot;
          mesh.userData.step += dt * (moving ? 11 : 2);
-         const swing = state.swingTimer > 0 ? Math.sin(Math.min(state.swingTimer / 0.18, 1) * Math.PI) * 0.45 : 0;
+         const swing = state.swingTimer > 0 ? Math.sin((1 - Math.min(state.swingTimer / 0.42, 1)) * Math.PI) * 0.55 : 0;
          const walk = moving ? Math.sin(mesh.userData.step) * 0.42 : 0;
          mesh.userData.body.position.y = moving ? Math.abs(Math.sin(mesh.userData.step * 2)) * 0.045 : 0;
          mesh.userData.limbs[0].rotation.x = walk + swing;
@@ -1987,11 +2028,11 @@
       const colors = { default: "#536d80", red: "#e74c3c", blue: "#3498db", green: "#2ecc71", yellow: "#f1c40f", pink: "#fd79a8", cyan: "#00cec9", orange: "#e67e22" };
       const color = colors[player.skin] || colors.blue;
       const size = Math.max(12, scale * 0.85);
-      const moving = player.isBot || (isMe && (moveInput.x || moveInput.z || keys.w || keys.a || keys.s || keys.d || keys.arrowup || keys.arrowdown || keys.arrowleft || keys.arrowright));
+      const moving = player.isBot || (isMe && (player.dashTimer > 0 || moveInput.x || moveInput.z || keys.w || keys.a || keys.s || keys.d || keys.arrowup || keys.arrowdown || keys.arrowleft || keys.arrowright));
       const stride = moving ? Math.sin(time / 75 + (isMe ? 0 : player.x)) * size * 0.7 : 0;
       const facingX = player.facingX === undefined ? (player.dir === "left" ? -1 : 1) : player.facingX;
       const facingZ = player.facingZ === undefined ? 0 : player.facingZ;
-      const swing = player.swingTimer > 0 ? Math.sin(Math.min(player.swingTimer / 0.18, 1) * Math.PI) : 0;
+      const swing = player.swingTimer > 0 ? Math.sin((1 - Math.min(player.swingTimer / 0.42, 1)) * Math.PI) : 0;
 
       ctx2d.save();
       ctx2d.globalAlpha = player.respawnTimer > 0 ? 0.3 : (player.invulnerabilityTimer > 0 && Math.floor(time / 90) % 2 === 0 ? 0.4 : 1);
@@ -2098,6 +2139,10 @@
     document.getElementById("btn-attack").onpointerdown = e => { e.preventDefault(); keys[" "]=true; };
     document.getElementById("btn-attack").onpointerup = e => { e.preventDefault(); keys[" "]=false; };
     document.getElementById("btn-attack").onpointerleave = e => { keys[" "]=false; };
+    document.getElementById("btn-dash-touch").onpointerdown = e => { e.preventDefault(); keys.shift = true; };
+    document.getElementById("btn-dash-touch").onpointerup = e => { e.preventDefault(); keys.shift = false; };
+    document.getElementById("btn-dash-touch").onpointercancel = () => { keys.shift = false; };
+    document.getElementById("btn-dash-touch").onpointerleave = () => { keys.shift = false; };
     document.getElementById("btn-shop-touch").onpointerdown = e => { e.preventDefault(); toggleShop(); };
     document.getElementById("btn-place-touch").onpointerdown = e => { e.preventDefault(); if (!window.WarsBedWars || !window.WarsBedWars.interactWithChest(myPeerId)) placeBlock3D(); };
 

@@ -1,5 +1,5 @@
 (() => {
-  const BASE_TOKENS_PER_SECOND = 8;
+  const BASE_TOKENS_PER_SECOND = 5;
   const EMERALD_FIRST_SPAWN = 8;
   const EMERALD_RESPAWN = 16;
   const MAX_BED_SHIELD = 120;
@@ -183,14 +183,13 @@
       sendAction("openChest");
       return true;
     }
-    if (!gameState.chests[0].opened) {
-      gameState.chests[0].opened = true;
-      gameState.tokens += 80;
-      gameState.emeralds = (gameState.emeralds || 0) + 1;
-      if (chestMesh) chestMesh.visible = false;
-      updateHud();
-      notify("Chest looted: +80 tokens, +1 emerald");
-    }
+    if (gameState.chests[0].opened) return false;
+    gameState.chests[0].opened = true;
+    gameState.tokens += 80;
+    gameState.emeralds = (gameState.emeralds || 0) + 1;
+    if (chestMesh) chestMesh.visible = false;
+    updateHud();
+    notify("Chest looted: +80 tokens, +1 emerald");
     return true;
   }
 
@@ -212,7 +211,29 @@
   function damagePlayer(attacker, target, damage) {
     if (!isHost || !target || target.eliminated || target.hp <= 0 || target.invulnerabilityTimer > 0) return;
     target.hp = Math.max(0, target.hp - damage);
+    if (attacker) {
+      const directionX = target.x - attacker.x;
+      const directionZ = target.z - attacker.z;
+      const distance = Math.hypot(directionX, directionZ) || 1;
+      const pushX = target.x + directionX / distance * 1.15;
+      const pushZ = target.z + directionZ / distance * 1.15;
+      if (isSafe3D(pushX, pushZ)) {
+        target.x = pushX;
+        target.z = pushZ;
+      } else {
+        if (isSafe3D(pushX, target.z)) target.x = pushX;
+        if (isSafe3D(target.x, pushZ)) target.z = pushZ;
+      }
+      if (attacker.id === myPeerId) notify(`HIT! -${damage}`);
+    }
     if (target.hp === 0) {
+      if (attacker) {
+        attacker.kills = (attacker.kills || 0) + 1;
+        const localPlayer = gameState.players[myPeerId];
+        const earnedTokens = localPlayer && attacker.team === localPlayer.team;
+        if (earnedTokens) gameState.tokens += 25;
+        if (attacker.id === myPeerId) notify(earnedTokens ? "KNOCKOUT! +25 tokens" : "KNOCKOUT!");
+      }
       if (bedAlive(target.team)) {
         const spawn = bedSpawn(target.team);
         target.x = spawn.x;
@@ -241,14 +262,22 @@
     const now = performance.now();
     if (now - (state.lastAttackAt[playerId] || 0) < 220) return;
     state.lastAttackAt[playerId] = now;
+    attacker.swingTimer = attacker.hasAxe ? 0.42 : 0.3;
     const damage = attacker.hasEmeraldBlade ? 40 : attacker.hasAxe ? 35 : attacker.hasSword ? 20 : 10;
     const reach = attacker.hasAxe ? 4.2 : attacker.hasSword || attacker.hasEmeraldBlade ? 3.6 : 3.3;
+    const facingLength = Math.hypot(attacker.facingX || 0, attacker.facingZ || 0) || 1;
+    const facingX = (attacker.facingX || 0) / facingLength;
+    const facingZ = (attacker.facingZ || 0) / facingLength;
     let nearest = null;
     let nearestDistance = reach;
     for (const id in gameState.players) {
       const target = gameState.players[id];
       if (id === playerId || target.team === attacker.team || target.eliminated || target.hp <= 0) continue;
-      const distance = Math.hypot(attacker.x - target.x, attacker.z - target.z);
+      const toTargetX = target.x - attacker.x;
+      const toTargetZ = target.z - attacker.z;
+      const distance = Math.hypot(toTargetX, toTargetZ);
+      const facingDot = distance > 0 ? (facingX * toTargetX + facingZ * toTargetZ) / distance : 1;
+      if (facingDot < 0.35) continue;
       if (distance < nearestDistance) {
         nearest = target;
         nearestDistance = distance;
@@ -263,7 +292,11 @@
     const targetBed = targetTeam === "blue"
       ? { x: MAP.spawn.x + 5.5, z: MAP.spawn.z }
       : { x: MAP.enemy.x - 5.5, z: MAP.enemy.z };
-    if (Math.hypot(attacker.x - targetBed.x, attacker.z - targetBed.z) < 3) {
+    const toBedX = targetBed.x - attacker.x;
+    const toBedZ = targetBed.z - attacker.z;
+    const bedDistance = Math.hypot(toBedX, toBedZ);
+    const bedFacingDot = bedDistance > 0 ? (facingX * toBedX + facingZ * toBedZ) / bedDistance : 1;
+    if (bedDistance < 3 && bedFacingDot >= 0.35) {
       damageBed(targetTeam, damage);
     }
   }
