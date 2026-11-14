@@ -214,11 +214,16 @@
 
     /* TOUCH CONTROLS */
     #touch-controls { position: absolute; inset: 0; z-index: 50; display: none; pointer-events: none; }
-    .joystick-base { position: absolute; bottom: 50px; left: 50px; width: 120px; height: 120px; background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; pointer-events: auto; }
+    .joystick-base { position: absolute; bottom: 50px; left: 50px; width: 120px; height: 120px; background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; pointer-events: auto; touch-action: none; }
+    .joystick-base::after { content: "MOVE"; position: absolute; top: 7px; left: 50%; transform: translateX(-50%); color: rgba(255,255,255,0.75); font: 16px 'VT323', monospace; pointer-events: none; }
     .joystick-stick { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 50px; height: 50px; background: rgba(255,255,255,0.5); border-radius: 50%; pointer-events: none; }
-    .action-btn { position: absolute; bottom: 60px; right: 60px; width: 90px; height: 90px; background: rgba(255,255,255,0.2); border: 3px solid rgba(255,255,255,0.5); border-radius: 50%; pointer-events: auto; display: flex; justify-content: center; align-items: center; color: #fff; font-family: 'VT323', monospace; font-size: 24px; }
-    .shop-btn-touch { position: absolute; bottom: 170px; right: 60px; width: 60px; height: 60px; background: rgba(241, 196, 15, 0.8); border: 3px solid #f39c12; border-radius: 50%; pointer-events: auto; display: flex; justify-content: center; align-items: center; font-family: 'VT323', monospace; font-size: 20px; }
-    .place-btn-touch { position: absolute; bottom: 170px; left: 60px; width: 60px; height: 60px; background: rgba(142, 68, 173, 0.8); border: 3px solid #6c3483; border-radius: 50%; pointer-events: auto; display: flex; justify-content: center; align-items: center; color: #fff; font-family: 'VT323', monospace; font-size: 20px; }
+    .look-joystick-base { position: absolute; right: 50px; bottom: 50px; width: 120px; height: 120px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; background: rgba(255,255,255,0.1); pointer-events: auto; touch-action: none; }
+    .look-joystick-base::after { content: "LOOK"; position: absolute; top: 7px; left: 50%; transform: translateX(-50%); color: rgba(255,255,255,0.75); font: 16px 'VT323', monospace; pointer-events: none; }
+    .look-joystick-stick { position: absolute; top: 50%; left: 50%; width: 50px; height: 50px; border-radius: 50%; background: rgba(255,255,255,0.5); transform: translate(-50%, -50%); pointer-events: none; }
+    .action-btn { position: absolute; bottom: 190px; right: 80px; width: 64px; height: 64px; background: rgba(255,255,255,0.2); border: 3px solid rgba(255,255,255,0.5); border-radius: 50%; pointer-events: auto; display: flex; justify-content: center; align-items: center; color: #fff; font-family: 'VT323', monospace; font-size: 20px; touch-action: none; }
+    .shop-btn-touch { position: absolute; bottom: 270px; right: 80px; width: 54px; height: 54px; background: rgba(241, 196, 15, 0.8); border: 3px solid #f39c12; border-radius: 50%; pointer-events: auto; display: flex; justify-content: center; align-items: center; font-family: 'VT323', monospace; font-size: 18px; touch-action: none; }
+    .place-btn-touch { position: absolute; bottom: 190px; left: 80px; width: 54px; height: 54px; background: rgba(142, 68, 173, 0.8); border: 3px solid #6c3483; border-radius: 50%; pointer-events: auto; display: flex; justify-content: center; align-items: center; color: #fff; font-family: 'VT323', monospace; font-size: 18px; touch-action: none; }
+    #touch-controls.mode-2d #look-joystick-base { display: none; }
     @media (pointer: coarse) { #touch-controls { display: block; } }
 
     /* GAME OVER */
@@ -248,7 +253,7 @@
       <div class="guide-grid">
         <section class="guide-section">
           <h3>MOVE & EXPLORE</h3>
-          <p>Use WASD or arrow keys. On touch screens, steer with the left joystick. Cross the bridge to reach the middle and enemy island.</p>
+          <p>Use WASD or arrow keys. On touch screens, steer with the left joystick and look around with the right one. Cross the bridge to reach the middle and enemy island.</p>
         </section>
         <section class="guide-section">
           <h3>FIGHT & BUILD</h3>
@@ -488,6 +493,7 @@
 
     <div id="touch-controls">
       <div class="joystick-base" id="joystick-base"><div class="joystick-stick" id="joystick-stick"></div></div>
+      <div class="look-joystick-base" id="look-joystick-base" aria-label="Look around"><div class="look-joystick-stick" id="look-joystick-stick"></div></div>
       <div class="action-btn" id="btn-attack">SWING</div>
       <div class="shop-btn-touch" id="btn-shop-touch">SHOP</div>
       <div class="place-btn-touch" id="btn-place-touch">PLACE</div>
@@ -742,6 +748,7 @@
       document.getElementById("lobby-mode-3d").classList.toggle("active", mode === "3d");
       document.getElementById("lobby-mode-2d").classList.toggle("active", mode === "2d");
       document.getElementById("arena-map-control").classList.toggle("hidden", mode === "2d");
+      document.getElementById("touch-controls").classList.toggle("mode-2d", mode === "2d");
       const inGame = !document.getElementById("game").classList.contains("hidden");
       if (inGame) {
         setupGameView();
@@ -779,6 +786,9 @@
     const sharedGeometry = {};
     const sharedMaterials = {};
     const moveInput = { x: 0, z: 0 };
+    const lookInput = { x: 0, y: 0 };
+    const cameraLook = { yaw: 0, pitch: 0 };
+    let lookPointerId = null;
     let gameState = { players: {}, bedHp: 100, enemyBedHp: 100, tokens: 500, blocks: [], particles: [], chests: [{x: 0, z: 0, opened: false}] };
     const keys = {};
 
@@ -1361,6 +1371,9 @@
       ctx2d = null;
       document.getElementById("canvas-container").innerHTML = "";
       for (const key in moveInput) moveInput[key] = 0;
+      resetLookJoystick();
+      cameraLook.yaw = 0;
+      cameraLook.pitch = 0;
       for (const key in keys) keys[key] = false;
     }
 
@@ -1429,6 +1442,8 @@
       me.invulnerabilityTimer = Math.max(0, (me.invulnerabilityTimer || 0) - dt);
       me.boostTimer = Math.max(0, (me.boostTimer || 0) - dt);
       me.boostCooldown = Math.max(0, (me.boostCooldown || 0) - dt);
+      cameraLook.yaw = (cameraLook.yaw + lookInput.x * dt * 2.4) % (Math.PI * 2);
+      cameraLook.pitch = Math.max(-0.75, Math.min(0.75, cameraLook.pitch + lookInput.y * dt * 1.5));
       if (me.respawnTimer > 0) {
         me.respawnTimer = Math.max(0, me.respawnTimer - dt);
         if (me.respawnTimer === 0) {
@@ -1609,14 +1624,14 @@
       }
 
       const target = playerMeshes[myPeerId].position;
+      const yaw = playerMeshes[myPeerId].rotation.y + cameraLook.yaw;
       if (currentCamera === "first") {
-        const mesh = playerMeshes[myPeerId];
-        const direction = new THREE.Vector3(Math.sin(mesh.rotation.y), 0, Math.cos(mesh.rotation.y));
-        camera.position.set(target.x - direction.x * 11, 8, target.z - direction.z * 11);
-        camera.lookAt(target.x + direction.x * 3, 1, target.z + direction.z * 3);
+        const direction = new THREE.Vector3(Math.sin(yaw), 0, Math.cos(yaw));
+        camera.position.set(target.x - direction.x * 11, 8 - cameraLook.pitch * 7, target.z - direction.z * 11);
+        camera.lookAt(target.x + direction.x * 3, 1 - cameraLook.pitch * 4, target.z + direction.z * 3);
       } else {
-        camera.position.set(target.x + 18, 23, target.z + 25);
-        camera.lookAt(target.x, 0, target.z);
+        camera.position.set(target.x + 18 * Math.cos(cameraLook.yaw) + 25 * Math.sin(cameraLook.yaw), 23 - cameraLook.pitch * 14, target.z - 18 * Math.sin(cameraLook.yaw) + 25 * Math.cos(cameraLook.yaw));
+        camera.lookAt(target.x, -cameraLook.pitch * 2.5, target.z);
       }
 
       renderer.render(scene, camera);
@@ -1951,6 +1966,8 @@
 
     const joystickBase = document.getElementById("joystick-base");
     const joystickStick = document.getElementById("joystick-stick");
+    const lookJoystickBase = document.getElementById("look-joystick-base");
+    const lookJoystickStick = document.getElementById("look-joystick-stick");
     function updateJoystick(event) {
       const rect = joystickBase.getBoundingClientRect();
       const radius = rect.width * 0.34;
@@ -1968,10 +1985,29 @@
       moveInput.z = 0;
       joystickStick.style.transform = "translate(-50%, -50%)";
     }
+    function updateLookJoystick(event) {
+      const rect = lookJoystickBase.getBoundingClientRect();
+      const radius = rect.width * 0.34;
+      const dx = event.clientX - (rect.left + rect.width / 2);
+      const dy = event.clientY - (rect.top + rect.height / 2);
+      const length = Math.hypot(dx, dy);
+      const scale = length > radius ? radius / length : 1;
+      const x = dx * scale, y = dy * scale;
+      lookInput.x = x / radius;
+      lookInput.y = y / radius;
+      lookJoystickStick.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`;
+    }
+    function resetLookJoystick() {
+      lookPointerId = null;
+      lookInput.x = 0;
+      lookInput.y = 0;
+      if (lookJoystickStick) lookJoystickStick.style.transform = "translate(-50%, -50%)";
+    }
     document.addEventListener("visibilitychange", () => {
       if (document.hidden) {
         for (const key in keys) keys[key] = false;
         resetJoystick();
+        resetLookJoystick();
       } else {
         lastTime = performance.now();
       }
@@ -1986,6 +2022,23 @@
     });
     joystickBase.addEventListener("pointerup", resetJoystick);
     joystickBase.addEventListener("pointercancel", resetJoystick);
+    lookJoystickBase.addEventListener("pointerdown", event => {
+      if (lookPointerId !== null) return;
+      event.preventDefault();
+      lookPointerId = event.pointerId;
+      lookJoystickBase.setPointerCapture(event.pointerId);
+      updateLookJoystick(event);
+    });
+    lookJoystickBase.addEventListener("pointermove", event => {
+      if (event.pointerId === lookPointerId && lookJoystickBase.hasPointerCapture(event.pointerId)) updateLookJoystick(event);
+    });
+    const releaseLookJoystick = event => {
+      if (event.pointerId !== lookPointerId) return;
+      lookPointerId = null;
+      resetLookJoystick();
+    };
+    lookJoystickBase.addEventListener("pointerup", releaseLookJoystick);
+    lookJoystickBase.addEventListener("pointercancel", releaseLookJoystick);
 
     function onWindowResize() {
       if (canvas2d && ctx2d) {
