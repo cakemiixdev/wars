@@ -1,0 +1,218 @@
+#token-hud {
+  max-width: calc(100vw - 24px);
+  gap: 10px;
+  padding: 8px 12px;
+  font-size: 28px;
+}
+
+#objective-hud {
+  gap: 8px;
+  padding: 8px 10px;
+  font-size: clamp(14px, 2vw, 20px);
+  max-width: calc(100vw - 20px);
+}
+
+.objective-bed {
+  gap: 4px;
+}
+
+.emerald-icon {
+  color: #71ffd1;
+  font-size: 28px;
+  text-shadow: 1px 2px 0 #123a36;
+}
+
+.shop-icon.emerald-blade {
+  background: #45d6a5;
+}
+
+.shop-icon.bed-armor {
+  background: #5da9d1;
+}
+
+#shop-menu {
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+#bedwars-toast {
+  position: absolute;
+  z-index: 450;
+  top: 58%;
+  left: 50%;
+  transform: translate(-50%, 10px);
+  max-width: 90vw;
+  padding: 8px 14px;
+  border: 3px solid #142c38;
+  border-radius: 8px;
+  background: rgba(15, 35, 48, 0.94);
+  color: #fff;
+  font: 22px 'VT323', monospace;
+  text-align: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+#bedwars-toast.visible {
+  transform: translate(-50%, 0);
+  opacity: 1;
+}
+
+#game-over-screen.bedwars-win {
+  background: radial-gradient(circle, rgba(47, 98, 54, 0.94), rgba(6, 24, 21, 0.96));
+}
+
+#game-over-screen.bedwars-loss {
+  background: radial-gradient(circle, rgba(120, 45, 37, 0.94), rgba(25, 12, 20, 0.96));
+}
+
+.result-actions {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.btn-rematch {
+  background: #baff6b;
+  color: #173018;
+}
+
+.bedwars-trophy {
+  margin-bottom: 8px;
+  font-size: clamp(64px, 14vw, 112px);
+  line-height: 1;
+  filter: drop-shadow(0 8px 0 rgba(0, 0, 0, 0.3));
+}
+
+#game-over-screen.bedwars-win .bedwars-trophy {
+  animation: bedwars-trophy-win 1.1s cubic-bezier(0.2, 0.8, 0.2, 1) infinite alternate;
+}
+
+#game-over-screen.bedwars-loss .bedwars-trophy {
+  animation: bedwars-trophy-loss 1.4s ease-in-out infinite alternate;
+}
+
+#game-over-screen.bedwars-win .go-title {
+  animation: bedwars-title-pop 0.65s cubic-bezier(0.2, 1.5, 0.4, 1) both;
+}
+
+@keyframes bedwars-trophy-win {
+  from { transform: translateY(8px) rotate(-8deg) scale(0.96); }
+  to { transform: translateY(-10px) rotate(8deg) scale(1.05); }
+}
+
+@keyframes bedwars-trophy-loss {
+  from { transform: rotate(-5deg); }
+  to { transform: rotate(5deg); }
+}
+
+@keyframes bedwars-title-pop {
+  from { opacity: 0; transform: scale(0.65); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@media (max-width: 600px) {
+  #game #token-hud {
+    max-width: calc(100vw - 150px);
+    gap: 6px;
+    padding: 6px;
+    font-size: 17px;
+  }
+
+  #game #token-hud .token-img {
+    height: 20px;
+    flex-shrink: 0;
+  }
+
+  #game #token-hud .token-amount {
+    font-size: 17px;
+  }
+
+  #game #token-hud .hud-divider {
+    width: 2px;
+    height: 20px;
+    flex: 0 0 2px;
+  }
+
+  #game #token-hud .block-icon {
+    width: 18px;
+    height: 18px;
+    border-width: 1px;
+    flex: 0 0 18px;
+  }
+
+  #objective-hud {
+    gap: 5px;
+    padding: 7px 6px;
+    font-size: 14px;
+  }
+
+  .objective-bed {
+    gap: 3px;
+  }
+
+  .emerald-icon {
+    font-size: 18px;
+  }
+}
+
+@media (max-width: 360px) {
+  #game #token-hud {
+    gap: 3px;
+    padding: 5px;
+    font-size: 14px;
+  }
+
+  #game #token-hud .token-img {
+    height: 18px;
+  }
+
+  #game #token-hud .token-amount {
+    font-size: 14px;
+  }
+
+  #game #token-hud .hud-divider {
+    width: 1px;
+    height: 16px;
+    flex-basis: 1px;
+  }
+
+  #game #token-hud .block-icon {
+    width: 16px;
+    height: 16px;
+    flex-basis: 16px;
+  }
+}
+
+@media (max-width: 600px) {
+  #game-over-screen {
+    box-sizing: border-box;
+    overflow-y: auto;
+    padding: 16px 12px;
+  }
+
+  .go-title {
+    font-size: clamp(58px, 18vw, 80px);
+  }
+
+  .go-subtitle {
+    font-size: 18px;
+    margin-bottom: 12px;
+  }
+
+  .cat-gif {
+    width: min(220px, 70vw);
+    margin-bottom: 14px;
+  }
+
+  .result-actions {
+    gap: 8px;
+  }
+
+  .btn-continue {
+    padding: 10px 16px;
+    font-size: 18px;
+  }
+}

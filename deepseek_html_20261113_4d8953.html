@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <title>WARS - 3D</title>
   <link href="https://fonts.googleapis.com/css2?family=VT323&family=Fredoka+One&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="bedwars.css">
   <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
   <!-- Load Three.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -213,7 +214,7 @@
     .settings-btn.quit { background: #e74c3c; color: #fff; text-shadow: 1px 1px 0 #000; margin-top: 20px;}
 
     /* TOUCH CONTROLS */
-    #touch-controls { position: absolute; inset: 0; z-index: 50; display: none; pointer-events: none; }
+    #touch-controls { position: absolute; inset: 0; z-index: 50; display: none; pointer-events: none; user-select: none; -webkit-user-select: none; }
     .joystick-base { position: absolute; bottom: 50px; left: 50px; width: 120px; height: 120px; background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; pointer-events: auto; touch-action: none; }
     .joystick-base::after { content: "MOVE"; position: absolute; top: 7px; left: 50%; transform: translateX(-50%); color: rgba(255,255,255,0.75); font: 16px 'VT323', monospace; pointer-events: none; }
     .joystick-stick { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 50px; height: 50px; background: rgba(255,255,255,0.5); border-radius: 50%; pointer-events: none; }
@@ -225,6 +226,14 @@
     .place-btn-touch { position: absolute; bottom: 190px; left: 80px; width: 54px; height: 54px; background: rgba(142, 68, 173, 0.8); border: 3px solid #6c3483; border-radius: 50%; pointer-events: auto; display: flex; justify-content: center; align-items: center; color: #fff; font-family: 'VT323', monospace; font-size: 18px; touch-action: none; }
     #touch-controls.mode-2d #look-joystick-base { display: none; }
     @media (pointer: coarse) { #touch-controls { display: block; } }
+    @media (max-width: 700px) {
+      .joystick-base, .look-joystick-base { width: 112px; height: 112px; bottom: 24px; }
+      .joystick-base { left: 20px; }
+      .look-joystick-base { right: 20px; }
+      .action-btn { right: 24px; bottom: 156px; }
+      .shop-btn-touch { right: 100px; bottom: 156px; }
+      .place-btn-touch { left: 100px; bottom: 156px; }
+    }
 
     /* GAME OVER */
     #game-over-screen { position: absolute; inset: 0; background: rgba(0,0,0,0.85); z-index: 500; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #fff; text-align: center; }
@@ -268,7 +277,7 @@
           <p>Pick 2D Stickmen or 3D Island Arena in the lobby or settings. In 3D, choose Sky Garden, Ember Rift, or Frostwood Peaks. Run across glowing rings for a speed boost. Choose Web for bots, or host a room and share its code.</p>
         </section>
       </div>
-      <p class="guide-tip">TIP: You start with 500 tokens. The middle chest gives 100 more, and tokens are earned during a match.</p>
+      <p class="guide-tip">TIP: Your base forge earns 8 tokens each second. Loot the middle chest for 80 tokens and an emerald; more emeralds spawn in the center. Spend emeralds on a stronger blade or bed plating.</p>
     </div>
   </div>
   
@@ -424,24 +433,30 @@
     <div id="canvas-container"></div>
     
     <div id="game-over-screen" class="hidden">
+      <div id="bedwars-trophy" class="bedwars-trophy" aria-hidden="true">🏆</div>
       <h1 class="go-title" id="go-title">VICTORY!</h1>
       <p class="go-subtitle" id="go-subtitle">You destroyed the enemy bed!</p>
       <img src="https://media.giphy.com/media/MDJ9IbxxvDUQM/giphy.gif" class="cat-gif" alt="Cute Cat">
-      <button class="btn-continue" onclick="quitGame()">Back to Menu</button>
+      <div class="result-actions">
+        <button id="rematch-btn" class="btn-continue btn-rematch hidden" type="button" onclick="rematchMatch()">Rematch</button>
+        <button class="btn-continue" type="button" onclick="quitGame()">Back to Menu</button>
+      </div>
     </div>
 
     <div id="settings-btn" onclick="toggleSettings()"></div>
     
     <div id="token-hud">
       <img src="assets/currency.png" class="token-img" alt="Tokens">
-      <div class="token-amount" id="hud-tokens">500</div>
+      <div class="token-amount" id="hud-tokens">50</div>
+      <div class="hud-divider"></div>
+      <span class="emerald-icon" aria-hidden="true">♦</span><div class="token-amount" id="hud-emeralds">0</div>
       <div class="hud-divider"></div>
       <div class="block-icon"></div><div class="token-amount" id="hud-blocks">0</div>
     </div>
     <div id="objective-hud">
-      <div class="objective-bed"><span>YOUR BED</span><span class="objective-heart">♥</span><span id="own-bed-hp">100</span></div>
+      <div class="objective-bed"><span>YOUR BED</span><span class="objective-heart">♥</span><span id="own-bed-hp">100</span><span>SHIELD</span><span id="own-bed-shield">0</span></div>
       <div class="hud-divider"></div>
-      <div class="objective-bed"><span>ENEMY BED</span><span class="objective-heart">♥</span><span id="enemy-bed-hp">100</span></div>
+      <div class="objective-bed"><span>ENEMY BED</span><span class="objective-heart">♥</span><span id="enemy-bed-hp">100</span><span>SHIELD</span><span id="enemy-bed-shield">0</span></div>
     </div>
     <div id="player-hud" aria-label="Player health">
       <div class="player-hud-labels"><span>HEALTH</span><span id="player-hp-text">100 / 100</span></div>
@@ -450,7 +465,7 @@
       </div>
       <div id="player-status">READY</div>
     </div>
-    <div id="game-hint">WASD / ARROWS MOVE · SPACE SWING · E SHOP · F PLACE / OPEN CHEST · GLOWING PADS BOOST · ? GUIDE</div>
+    <div id="game-hint">WASD / ARROWS MOVE · SPACE SWING · E SHOP · F BUILD / LOOT · COLLECT EMERALDS MID · ? GUIDE</div>
 
     <div id="shop-menu" class="hidden">
       <img src="assets/shop.png" class="shop-header-img" alt="Shop">
@@ -468,6 +483,16 @@
         <div class="shop-icon wood">🟪</div>
         <div class="shop-details"><div class="shop-name">Wood Blocks (x5)</div><div class="shop-desc">Build bridges to the middle.</div></div>
         <div class="shop-cost">25</div>
+      </div>
+      <div class="shop-item" onclick="buyEmeraldBlade()">
+        <div class="shop-icon emerald-blade">💎</div>
+        <div class="shop-details"><div class="shop-name">Emerald Blade</div><div class="shop-desc">Powerful 40-damage sword.</div></div>
+        <div class="shop-cost">4 ♦</div>
+      </div>
+      <div class="shop-item" onclick="buyBedArmor()">
+        <div class="shop-icon bed-armor">🛡️</div>
+        <div class="shop-details"><div class="shop-name">Bed Plating</div><div class="shop-desc">Add 40 shield to your bed.</div></div>
+        <div class="shop-cost">2 ♦</div>
       </div>
       <button class="shop-close" onclick="toggleShop()">CLOSE</button>
     </div>
@@ -672,13 +697,42 @@
         if (data.type === "arenaMap") setArenaMap(data.mapId, false);
         if (data.type === "start") { if (data.mapId) setArenaMap(data.mapId, false); loadScene("game", true); }
         if (data.type === "gameState" && !isHost) {
-          for (let id in data.state) { if (id !== myPeerId) { if (gameState.players[id]) Object.assign(gameState.players[id], data.state[id]); else gameState.players[id] = data.state[id]; } }
+          for (let id in data.state) {
+            const incoming = data.state[id];
+            if (id !== myPeerId) {
+              if (gameState.players[id]) Object.assign(gameState.players[id], incoming);
+              else gameState.players[id] = incoming;
+            } else if (gameState.players[id]) {
+              const local = gameState.players[id];
+              for (const key of ["hp", "respawnTimer", "invulnerabilityTimer", "team", "hasSword", "hasAxe", "hasEmeraldBlade", "blocks", "eliminated"]) {
+                if (incoming[key] !== undefined) local[key] = incoming[key];
+              }
+            }
+          }
           gameState.bedHp = data.bedHp; gameState.enemyBedHp = data.enemyBedHp;
           if(data.blocks) { gameState.blocks = data.blocks; if (gameMode === "3d") rebuild3DBlocks(); }
         }
-        if (data.type === "playerMove" && isHost) { if(gameState.players[data.id]) Object.assign(gameState.players[data.id], data); }
-        if (data.type === "placeBlock") { gameState.blocks.push(data.block); if (gameMode === "3d") spawn3DBlock(data.block.x, data.block.z); for (const cid in connections) try { connections[cid].send({ type: "blockPlaced", block: data.block }); } catch(e){} }
-        if (data.type === "blockPlaced" && !isHost) { gameState.blocks.push(data.block); if (gameMode === "3d") spawn3DBlock(data.block.x, data.block.z); }
+        if (data.type === "playerMove" && isHost && data.id === conn.peer && gameState.players[data.id] && Number.isFinite(data.x) && Number.isFinite(data.z)) {
+          const remote = gameState.players[data.id];
+          remote.x = data.x; remote.z = data.z;
+          if (Number.isFinite(data.hp)) remote.hp = data.hp;
+          if (Number.isFinite(data.respawnTimer)) remote.respawnTimer = data.respawnTimer;
+        }
+        if (data.type === "placeBlock" && isHost && gameState.players[conn.peer] && data.block && Number.isFinite(data.block.x) && Number.isFinite(data.block.z)) {
+          const player = gameState.players[conn.peer];
+          const block = { x: Math.round(data.block.x), z: Math.round(data.block.z) };
+          const alreadyPlaced = gameState.blocks.some(existing => existing.x === block.x && existing.z === block.z);
+          if ((player.blocks || 0) > 0 && !alreadyPlaced && Math.hypot(player.x - block.x, player.z - block.z) <= 2.5) {
+            player.blocks--;
+            gameState.blocks.push(block);
+            if (gameMode === "3d") spawn3DBlock(block.x, block.z);
+            for (const cid in connections) try { connections[cid].send({ type: "blockPlaced", block }); } catch(e) { console.error("Failed to sync placed block:", e); }
+          }
+        }
+        if (data.type === "blockPlaced" && !isHost && data.block && Number.isFinite(data.block.x) && Number.isFinite(data.block.z) && !gameState.blocks.some(existing => existing.x === data.block.x && existing.z === data.block.z)) {
+          gameState.blocks.push(data.block);
+          if (gameMode === "3d") spawn3DBlock(data.block.x, data.block.z);
+        }
       });
       conn.on("close", () => { delete connections[conn.peer]; delete players[conn.peer]; if (conn.peer === hostId) { hostId = null; players = {}; } updateLobbyUI(); if (isHost) broadcastPlayers(); });
     }
@@ -735,6 +789,10 @@
     
     function setCamera(mode) {
       currentCamera = mode;
+      cameraLook.yaw = 0;
+      cameraLook.pitch = 0;
+      resetJoystick();
+      resetLookJoystick();
       document.getElementById('cam-iso').classList.toggle('active', mode === 'iso');
       document.getElementById('cam-first').classList.toggle('active', mode === 'first');
       toggleSettings(); 
@@ -742,6 +800,10 @@
 
     function setGameMode(mode) {
       if (mode !== "3d" && mode !== "2d") return;
+      resetJoystick();
+      resetLookJoystick();
+      cameraLook.yaw = 0;
+      cameraLook.pitch = 0;
       gameMode = mode;
       document.getElementById("game-mode-3d").classList.toggle("active", mode === "3d");
       document.getElementById("game-mode-2d").classList.toggle("active", mode === "2d");
@@ -788,8 +850,11 @@
     const moveInput = { x: 0, z: 0 };
     const lookInput = { x: 0, y: 0 };
     const cameraLook = { yaw: 0, pitch: 0 };
-    let lookPointerId = null;
-    let gameState = { players: {}, bedHp: 100, enemyBedHp: 100, tokens: 500, blocks: [], particles: [], chests: [{x: 0, z: 0, opened: false}] };
+    const JOYSTICK_DEADZONE = 0.12;
+    const CAMERA_LOOK_YAW_SPEED = 1.8;
+    const CAMERA_LOOK_PITCH_SPEED = 1.2;
+    let movePointerId = null, lookPointerId = null;
+    let gameState = { players: {}, bedHp: 100, enemyBedHp: 100, tokens: 500, emeralds: 0, blueBedShield: 0, redBedShield: 0, pickups: [], result: null, blocks: [], particles: [], chests: [{x: 0, z: 0, opened: false}] };
     const keys = {};
 
     const ARENAS = {
@@ -1310,6 +1375,10 @@
     function startGameEngine() {
       matchArenaId = selectedArenaId;
       MAP = ARENAS[matchArenaId].layout;
+      resetJoystick();
+      resetLookJoystick();
+      cameraLook.yaw = 0;
+      cameraLook.pitch = 0;
       gameState.players = {};
       gameState.blocks = [];
       gameState.chests[0].opened = false;
@@ -1332,7 +1401,7 @@
       playerMeshes = {};
       blockMeshes = [];
 
-      gameState.players[myPeerId] = { x: MAP.spawn.x, z: MAP.spawn.z, dir: "right", facingX: 1, facingZ: 0, isMe: true, skin: currentSkin, name: getMyName(), hp: MAX_PLAYER_HP, respawnTimer: 0, invulnerabilityTimer: 0, swingTimer: 0, boostTimer: 0, boostCooldown: 0, boostDirection: 1, hasSword: false, hasAxe: false, blocks: 0 };
+      gameState.players[myPeerId] = { id: myPeerId, team: "blue", x: MAP.spawn.x, z: MAP.spawn.z, dir: "right", facingX: 1, facingZ: 0, isMe: true, skin: currentSkin, name: getMyName(), hp: MAX_PLAYER_HP, respawnTimer: 0, invulnerabilityTimer: 0, swingTimer: 0, boostTimer: 0, boostCooldown: 0, boostDirection: 1, hasSword: false, hasAxe: false, hasEmeraldBlade: false, blocks: 0 };
       updatePlayerHud(gameState.players[myPeerId]);
 
       let bc = 0;
@@ -1341,9 +1410,24 @@
           const angle = (bc / Math.max(1, Object.keys(players).length)) * Math.PI * 2;
           const bx = MAP.enemy.x + Math.cos(angle) * 3;
           const bz = MAP.enemy.z + Math.sin(angle) * 3;
-          gameState.players[id] = { x: bx, z: bz, dir: "left", facingX: -1, facingZ: 0, isMe: false, skin: players[id].skin, name: players[id].username, hp: MAX_PLAYER_HP, respawnTimer: 0, invulnerabilityTimer: 0, swingTimer: 0, blocks: 0, isBot: true, vx: -1.5, vz: 0 };
+          gameState.players[id] = { id, team: "red", x: bx, z: bz, dir: "left", facingX: -1, facingZ: 0, isMe: false, skin: players[id].skin, name: players[id].username, hp: MAX_PLAYER_HP, respawnTimer: 0, invulnerabilityTimer: 0, swingTimer: 0, blocks: 0, isBot: true, vx: -1.5, vz: 0 };
           bc++;
         }
+      }
+      let humanIndex = 0;
+      for (const id in players) {
+        if (id === myPeerId || players[id].isBot) continue;
+        const lane = humanIndex++;
+        gameState.players[id] = {
+          id, team: "blue",
+          x: MAP.spawn.x - 1 + (lane % 3) * 0.8,
+          z: MAP.spawn.z + (lane % 2 === 0 ? -1 : 1) * (1.2 + Math.floor(lane / 3)),
+          dir: "right", facingX: 1, facingZ: 0, isMe: false,
+          skin: players[id].skin, name: players[id].username,
+          hp: MAX_PLAYER_HP, respawnTimer: 0, invulnerabilityTimer: 0,
+          swingTimer: 0, blocks: 0, hasSword: false, hasAxe: false,
+          hasEmeraldBlade: false, isBot: false
+        };
       }
 
       setupGameView();
@@ -1351,12 +1435,7 @@
       lastTime = performance.now();
       lastMoveTime = 0;
       gameLoopId = requestAnimationFrame(gameLoop);
-      tokenIntervalId = window.setInterval(() => {
-        if (!document.hidden && !isGuideOpen && !isGameOver && document.getElementById("game").classList.contains("hidden") === false) {
-          gameState.tokens += 5;
-          document.getElementById("hud-tokens").textContent = gameState.tokens;
-        }
-      }, 1000);
+      tokenIntervalId = null;
     }
 
     function stopGameEngine() {
@@ -1408,10 +1487,10 @@
           if (isHost) {
             for (const id in connections) {
               if (!players[id] || players[id].isBot) continue;
-              try { connections[id].send({ type: "gameState", state: gameState.players, bedHp: gameState.bedHp, enemyBedHp: gameState.enemyBedHp, blocks: gameState.blocks }); } catch (e) { console.error("Failed to sync game state:", e); }
+              try { connections[id].send({ type: "gameState", state: gameState.players, bedHp: gameState.bedHp, enemyBedHp: gameState.enemyBedHp, blocks: gameState.blocks, tokens: gameState.tokens, emeralds: gameState.emeralds, blueBedShield: gameState.blueBedShield, redBedShield: gameState.redBedShield, pickups: gameState.pickups, chests: gameState.chests, result: gameState.result }); } catch (e) { console.error("Failed to sync game state:", e); }
             }
           } else if (connections[hostId] && gameState.players[myPeerId]) {
-            try { connections[hostId].send({ type: "playerMove", id: myPeerId, x: gameState.players[myPeerId].x, z: gameState.players[myPeerId].z, hp: gameState.players[myPeerId].hp }); } catch (e) { console.error("Failed to send player position:", e); }
+              try { connections[hostId].send({ type: "playerMove", id: myPeerId, x: gameState.players[myPeerId].x, z: gameState.players[myPeerId].z, hp: gameState.players[myPeerId].hp, respawnTimer: gameState.players[myPeerId].respawnTimer }); } catch (e) { console.error("Failed to send player position:", e); }
           }
           lastMoveTime = time;
         }
@@ -1437,13 +1516,20 @@
       if (playerStatus.textContent !== nextStatus) playerStatus.textContent = nextStatus;
     }
 
+    function getCameraForward() {
+      const directionX = MAP.enemy.x - MAP.spawn.x;
+      const directionZ = MAP.enemy.z - MAP.spawn.z;
+      const yaw = Math.atan2(directionX, directionZ) + cameraLook.yaw;
+      return { x: Math.sin(yaw), z: Math.cos(yaw) };
+    }
+
     function updateGame(dt) {
       const me = gameState.players[myPeerId]; if (!me) return;
       me.invulnerabilityTimer = Math.max(0, (me.invulnerabilityTimer || 0) - dt);
       me.boostTimer = Math.max(0, (me.boostTimer || 0) - dt);
       me.boostCooldown = Math.max(0, (me.boostCooldown || 0) - dt);
-      cameraLook.yaw = (cameraLook.yaw + lookInput.x * dt * 2.4) % (Math.PI * 2);
-      cameraLook.pitch = Math.max(-0.75, Math.min(0.75, cameraLook.pitch + lookInput.y * dt * 1.5));
+      cameraLook.yaw = (cameraLook.yaw + lookInput.x * dt * CAMERA_LOOK_YAW_SPEED) % (Math.PI * 2);
+      cameraLook.pitch = Math.max(-0.75, Math.min(0.75, cameraLook.pitch - lookInput.y * dt * CAMERA_LOOK_PITCH_SPEED));
       if (me.respawnTimer > 0) {
         me.respawnTimer = Math.max(0, me.respawnTimer - dt);
         if (me.respawnTimer === 0) {
@@ -1466,8 +1552,18 @@
         if (keys["d"] || keys["arrowright"]) moveX += 1;
         moveX += moveInput.x;
         moveZ += moveInput.z;
+        if (gameMode === "3d") {
+          const forward = getCameraForward();
+          const inputForward = -moveZ;
+          const inputRight = moveX;
+          moveX = inputForward * forward.x + inputRight * forward.z;
+          moveZ = inputForward * forward.z - inputRight * forward.x;
+        }
         if (keys[" "]) isAttacking = true;
-        if (keys["f"] && !keys._placeWasDown) { placeBlock3D(); keys._placeWasDown = true; }
+        if (keys["f"] && !keys._placeWasDown) {
+          if (!window.WarsBedWars || !window.WarsBedWars.interactWithChest(myPeerId)) placeBlock3D();
+          keys._placeWasDown = true;
+        }
         if (!keys["f"]) keys._placeWasDown = false;
 
         const magnitude = Math.hypot(moveX, moveZ);
@@ -1503,25 +1599,12 @@
               setTimeout(()=> { if(sword) sword.rotation.z = 0; }, 150);
            }
         }
-        let dmg = me.hasAxe ? 35 : (me.hasSword ? 20 : 10);
-        
-        for (const id in gameState.players) {
-          if (id === myPeerId) continue; const target = gameState.players[id];
-          if (Math.hypot(me.x - target.x, me.z - target.z) < (me.hasAxe ? 3.5 : 3) && target.hp > 0) {
-            target.hp -= dmg;
-            if (target.hp <= 0 && gameState.enemyBedHp > 0) { target.hp = 100; target.x = MAP.enemy.x; target.z = MAP.enemy.z; }
-          }
-        }
-        if (Math.hypot(me.x - (MAP.enemy.x - 5.5), me.z - MAP.enemy.z) < 3) {
-          gameState.enemyBedHp = Math.max(0, gameState.enemyBedHp - dmg);
-          document.getElementById("enemy-bed-hp").textContent = gameState.enemyBedHp;
-          checkGameOver3D();
-        }
+        if (window.WarsBedWars && !window.WarsBedWars.interactWithChest(myPeerId)) window.WarsBedWars.requestAttack(myPeerId);
       }
 
       for (const id in gameState.players) {
         const p = gameState.players[id]; if (id === myPeerId || p.hp <= 0) continue;
-        if (p.isBot) {
+        if (p.isBot && isHost) {
             const playerDistance = Math.hypot(me.x - p.x, me.z - p.z);
             const bedX = MAP.spawn.x + 5.5;
             const bedDistance = Math.hypot(bedX - p.x, MAP.spawn.z - p.z);
@@ -1542,34 +1625,17 @@
                 }
                 if (playerDistance < 2 && p.swingTimer <= 0) {
                   p.swingTimer = 0.5;
-                  if (me.invulnerabilityTimer <= 0 && me.respawnTimer <= 0) {
-                    me.hp = Math.max(0, me.hp - 10);
-                    if (me.hp === 0) me.respawnTimer = 2.25;
-                    updatePlayerHud(me);
-                  }
+                  if (me.invulnerabilityTimer <= 0 && me.respawnTimer <= 0 && window.WarsBedWars) window.WarsBedWars.damagePlayer(p, me, 10);
                 }
             }
             if (bedDistance < 2.2 && p.swingTimer <= 0 && gameState.bedHp > 0) {
               p.swingTimer = 0.5;
-              gameState.bedHp = Math.max(0, gameState.bedHp - 10);
-              document.getElementById("own-bed-hp").textContent = gameState.bedHp;
-              checkGameOver3D();
+              if (window.WarsBedWars) window.WarsBedWars.damageBed("blue", 10, id);
             }
             if (p.swingTimer > 0) p.swingTimer -= dt;
         }
       }
-      
-      // Chest check
-      if (canAct && !gameState.chests[0].opened) {
-          if(Math.hypot(me.x - MAP.mid.x, me.z - MAP.mid.z) < 3) {
-             if(keys["f"] || keys[" "]) {
-                 gameState.chests[0].opened = true;
-                 gameState.tokens += 100;
-                 document.getElementById("hud-tokens").textContent = gameState.tokens;
-                 if (chestMesh) chestMesh.visible = false;
-             }
-          }
-      }
+      if (window.WarsBedWars) window.WarsBedWars.update(dt);
     }
 
     function isSafe3D(x, z) {
@@ -1624,13 +1690,13 @@
       }
 
       const target = playerMeshes[myPeerId].position;
-      const yaw = playerMeshes[myPeerId].rotation.y + cameraLook.yaw;
+      const direction = getCameraForward();
       if (currentCamera === "first") {
-        const direction = new THREE.Vector3(Math.sin(yaw), 0, Math.cos(yaw));
         camera.position.set(target.x - direction.x * 11, 8 - cameraLook.pitch * 7, target.z - direction.z * 11);
         camera.lookAt(target.x + direction.x * 3, 1 - cameraLook.pitch * 4, target.z + direction.z * 3);
       } else {
-        camera.position.set(target.x + 18 * Math.cos(cameraLook.yaw) + 25 * Math.sin(cameraLook.yaw), 23 - cameraLook.pitch * 14, target.z - 18 * Math.sin(cameraLook.yaw) + 25 * Math.cos(cameraLook.yaw));
+        const yaw = cameraLook.yaw;
+        camera.position.set(target.x - 28 * Math.cos(yaw) + 14 * Math.sin(yaw), 23 - cameraLook.pitch * 14, target.z + 28 * Math.sin(yaw) + 14 * Math.cos(yaw));
         camera.lookAt(target.x, -cameraLook.pitch * 2.5, target.z);
       }
 
@@ -1962,40 +2028,48 @@
     document.getElementById("btn-attack").onpointerup = e => { e.preventDefault(); keys[" "]=false; };
     document.getElementById("btn-attack").onpointerleave = e => { keys[" "]=false; };
     document.getElementById("btn-shop-touch").onpointerdown = e => { e.preventDefault(); toggleShop(); };
-    document.getElementById("btn-place-touch").onpointerdown = e => { e.preventDefault(); placeBlock3D(); };
+    document.getElementById("btn-place-touch").onpointerdown = e => { e.preventDefault(); if (!window.WarsBedWars || !window.WarsBedWars.interactWithChest(myPeerId)) placeBlock3D(); };
 
     const joystickBase = document.getElementById("joystick-base");
     const joystickStick = document.getElementById("joystick-stick");
     const lookJoystickBase = document.getElementById("look-joystick-base");
     const lookJoystickStick = document.getElementById("look-joystick-stick");
-    function updateJoystick(event) {
-      const rect = joystickBase.getBoundingClientRect();
-      const radius = rect.width * 0.34;
+    function readJoystick(event, base) {
+      const rect = base.getBoundingClientRect();
+      const radius = Math.min(rect.width, rect.height) * 0.34;
       const dx = event.clientX - (rect.left + rect.width / 2);
       const dy = event.clientY - (rect.top + rect.height / 2);
       const length = Math.hypot(dx, dy);
       const scale = length > radius ? radius / length : 1;
       const x = dx * scale, y = dy * scale;
-      moveInput.x = x / radius;
-      moveInput.z = y / radius;
-      joystickStick.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`;
+      const magnitude = Math.min(1, length / radius);
+      const strength = magnitude <= JOYSTICK_DEADZONE
+        ? 0
+        : (magnitude - JOYSTICK_DEADZONE) / (1 - JOYSTICK_DEADZONE);
+      return {
+        x: length ? dx / length * strength : 0,
+        y: length ? dy / length * strength : 0,
+        stickX: x,
+        stickY: y
+      };
+    }
+    function updateJoystick(event) {
+      const position = readJoystick(event, joystickBase);
+      moveInput.x = position.x;
+      moveInput.z = position.y;
+      joystickStick.style.transform = `translate(calc(-50% + ${position.stickX}px), calc(-50% + ${position.stickY}px))`;
     }
     function resetJoystick() {
+      movePointerId = null;
       moveInput.x = 0;
       moveInput.z = 0;
       joystickStick.style.transform = "translate(-50%, -50%)";
     }
     function updateLookJoystick(event) {
-      const rect = lookJoystickBase.getBoundingClientRect();
-      const radius = rect.width * 0.34;
-      const dx = event.clientX - (rect.left + rect.width / 2);
-      const dy = event.clientY - (rect.top + rect.height / 2);
-      const length = Math.hypot(dx, dy);
-      const scale = length > radius ? radius / length : 1;
-      const x = dx * scale, y = dy * scale;
-      lookInput.x = x / radius;
-      lookInput.y = y / radius;
-      lookJoystickStick.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`;
+      const position = readJoystick(event, lookJoystickBase);
+      lookInput.x = position.x;
+      lookInput.y = position.y;
+      lookJoystickStick.style.transform = `translate(calc(-50% + ${position.stickX}px), calc(-50% + ${position.stickY}px))`;
     }
     function resetLookJoystick() {
       lookPointerId = null;
@@ -2013,15 +2087,22 @@
       }
     });
     joystickBase.addEventListener("pointerdown", event => {
+      if (movePointerId !== null) return;
       event.preventDefault();
+      movePointerId = event.pointerId;
       joystickBase.setPointerCapture(event.pointerId);
       updateJoystick(event);
     });
     joystickBase.addEventListener("pointermove", event => {
-      if (joystickBase.hasPointerCapture(event.pointerId)) updateJoystick(event);
+      if (event.pointerId === movePointerId && joystickBase.hasPointerCapture(event.pointerId)) updateJoystick(event);
     });
-    joystickBase.addEventListener("pointerup", resetJoystick);
-    joystickBase.addEventListener("pointercancel", resetJoystick);
+    const releaseMoveJoystick = event => {
+      if (event.pointerId !== movePointerId) return;
+      resetJoystick();
+    };
+    joystickBase.addEventListener("pointerup", releaseMoveJoystick);
+    joystickBase.addEventListener("pointercancel", releaseMoveJoystick);
+    joystickBase.addEventListener("lostpointercapture", releaseMoveJoystick);
     lookJoystickBase.addEventListener("pointerdown", event => {
       if (lookPointerId !== null) return;
       event.preventDefault();
@@ -2039,6 +2120,7 @@
     };
     lookJoystickBase.addEventListener("pointerup", releaseLookJoystick);
     lookJoystickBase.addEventListener("pointercancel", releaseLookJoystick);
+    lookJoystickBase.addEventListener("lostpointercapture", releaseLookJoystick);
 
     function onWindowResize() {
       if (canvas2d && ctx2d) {
@@ -2056,5 +2138,6 @@
 
     drawSkins();
   </script>
+  <script src="bedwars.js"></script>
 </body>
 </html>
