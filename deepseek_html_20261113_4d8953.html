@@ -860,8 +860,8 @@
     const ARENAS = {
       "sky-garden": {
         name: "Sky Garden",
-        description: "Green islands, wooden bridge, and leafy trees.",
-        layout: { spawn: { x: -15, z: 0 }, enemy: { x: 15, z: 0 }, mid: { x: 0, z: 0 }, islandRadius: 10, midRadius: 4.4, bridges: [{ z: 0, width: 4.2 }] },
+        description: "Green islands, a wide wooden bridge, and two side gardens.",
+        layout: { spawn: { x: -22, z: 0 }, enemy: { x: 22, z: 0 }, mid: { x: 0, z: 0 }, islandRadius: 12, midRadius: 7, extraIslands: [{ x: 0, z: -14.5, radius: 5 }, { x: 0, z: 14.5, radius: 5 }], bridges: [{ z: 0, width: 6.4 }, { axis: "z", x: 0, startZ: -10.25, endZ: -6.5, width: 4.8 }, { axis: "z", x: 0, startZ: 6.5, endZ: 10.25, width: 4.8 }] },
         sky: 0x8dd8ff, water: 0x39a9cf, waterEmissive: 0x000000,
         grass: 0x5eaa3e, dirt: 0x76513b, rock: 0x87938b, grassStroke: 0x83c653,
         bridge: 0xb5824a, bridgeDetail: 0x71472e, treeStyle: "leaf", propStyle: "cloud",
@@ -869,8 +869,8 @@
       },
       "ember-rift": {
         name: "Ember Rift",
-        description: "Basalt islands over glowing lava, with magma spires.",
-        layout: { spawn: { x: -18, z: 0 }, enemy: { x: 18, z: 0 }, mid: { x: 0, z: 0 }, islandRadius: 12, midRadius: 5.2, bridges: [{ z: 0, width: 3.8 }] },
+        description: "Basalt islands over glowing lava, with broad routes and side platforms.",
+        layout: { spawn: { x: -26, z: 0 }, enemy: { x: 26, z: 0 }, mid: { x: 0, z: 0 }, islandRadius: 14, midRadius: 8, extraIslands: [{ x: 0, z: -16.5, radius: 5.5 }, { x: 0, z: 16.5, radius: 5.5 }], bridges: [{ z: 0, width: 6.2 }, { axis: "z", x: 0, startZ: -11.8, endZ: -7.5, width: 5 }, { axis: "z", x: 0, startZ: 7.5, endZ: 11.8, width: 5 }] },
         sky: 0x503044, water: 0x8d3023, waterEmissive: 0x571406,
         grass: 0x514044, dirt: 0x34272f, rock: 0x76504c, grassStroke: 0xa9644d,
         bridge: 0x30252d, bridgeDetail: 0xe8753f, treeStyle: "none", propStyle: "ember",
@@ -878,8 +878,8 @@
       },
       "frostwood": {
         name: "Frostwood Peaks",
-        description: "Snowy pine islands linked by twin ice paths.",
-        layout: { spawn: { x: -16, z: 0 }, enemy: { x: 16, z: 0 }, mid: { x: 0, z: 0 }, islandRadius: 10.8, midRadius: 5.4, bridges: [{ z: -2, width: 2.5 }, { z: 2, width: 2.5 }] },
+        description: "Snowy pine islands linked by wide twin ice paths and side trails.",
+        layout: { spawn: { x: -24, z: 0 }, enemy: { x: 24, z: 0 }, mid: { x: 0, z: 0 }, islandRadius: 13, midRadius: 7.5, extraIslands: [{ x: 0, z: -16, radius: 5.5 }, { x: 0, z: 16, radius: 5.5 }], bridges: [{ z: -2, width: 4.2 }, { z: 2, width: 4.2 }, { axis: "z", x: 0, startZ: -11.3, endZ: -7, width: 4.8 }, { axis: "z", x: 0, startZ: 7, endZ: 11.3, width: 4.8 }] },
         sky: 0xc9ecff, water: 0x6bb8d7, waterEmissive: 0x082238,
         grass: 0xdcecf2, dirt: 0x71899a, rock: 0xa8c1cc, grassStroke: 0xb1e5f4,
         bridge: 0x9eddeb, bridgeDetail: 0x5c99b1, treeStyle: "pine", propStyle: "frost",
@@ -925,10 +925,19 @@
       };
     }
 
+    function getPlayableIslands() {
+      return [
+        { x: MAP.spawn.x, z: MAP.spawn.z, radius: MAP.islandRadius },
+        { x: MAP.enemy.x, z: MAP.enemy.z, radius: MAP.islandRadius },
+        { x: MAP.mid.x, z: MAP.mid.z, radius: MAP.midRadius },
+        ...(MAP.extraIslands || [])
+      ];
+    }
+
     function getBoostPads() {
       const pads = [];
       const offset = Math.max(2, MAP.islandRadius - 2.2);
-      for (const bridge of MAP.bridges) {
+      for (const bridge of MAP.bridges.filter(candidate => candidate.axis !== "z")) {
         pads.push({ x: MAP.spawn.x + offset, z: bridge.z, direction: 1 });
         pads.push({ x: MAP.enemy.x - offset, z: bridge.z, direction: -1 });
       }
@@ -999,9 +1008,7 @@
         water.position.y = -7.7;
         scene.add(water);
 
-        createIsland(MAP.spawn.x, MAP.spawn.z, MAP.islandRadius);
-        createIsland(MAP.enemy.x, MAP.enemy.z, MAP.islandRadius);
-        createIsland(MAP.mid.x, MAP.mid.z, MAP.midRadius);
+        for (const island of getPlayableIslands()) createIsland(island.x, island.z, island.radius);
         for (const bridge of MAP.bridges) createBridge(bridge);
         createBoostPads(arena);
         createArenaDecor(arena);
@@ -1100,15 +1107,23 @@
 
     function createBridge(bridge) {
       const arena = ARENAS[matchArenaId];
+      const detailMaterial = getMaterial(`bridge-detail:${matchArenaId}`, arena.bridgeDetail);
+      if (bridge.axis === "z") {
+        const startZ = Math.min(bridge.startZ, bridge.endZ);
+        const endZ = Math.max(bridge.startZ, bridge.endZ);
+        const length = endZ - startZ;
+        addBox(bridge.x, 0.36, (startZ + endZ) / 2, bridge.width, 0.28, length, getMaterial(`bridge:${matchArenaId}`, arena.bridge));
+        for (let z = startZ + 1; z < endZ; z += 2) {
+          addBox(bridge.x, 0.505, z, bridge.width, 0.01, 0.18, detailMaterial);
+        }
+        return;
+      }
+
       const bounds = getBridgeBounds();
-      const startX = bounds.startX;
-      const endX = bounds.endX;
-      const z = bridge.z;
-      const width = bridge.width;
-      const length = endX - startX;
-      addBox(startX + length / 2, 0.36, z, length, 0.28, width, getMaterial(`bridge:${matchArenaId}`, arena.bridge));
-      for (let x = startX + 1; x < endX; x += 2) {
-        addBox(x, 0.54, z, 0.18, 0.12, width + 0.08, getMaterial(`bridge-detail:${matchArenaId}`, arena.bridgeDetail));
+      const length = bounds.endX - bounds.startX;
+      addBox(bounds.startX + length / 2, 0.36, bridge.z, length, 0.28, bridge.width, getMaterial(`bridge:${matchArenaId}`, arena.bridge));
+      for (let x = bounds.startX + 1; x < bounds.endX; x += 2) {
+        addBox(x, 0.505, bridge.z, 0.18, 0.01, bridge.width, detailMaterial);
       }
     }
 
@@ -1314,8 +1329,8 @@
     }
 
     function spawn3DBlock(x, z) {
-      const block = new THREE.Mesh(getGeometry("placed-block", () => new THREE.BoxGeometry(1.2, 1.2, 1.2)), getMaterial("placed-block", 0x9b653b));
-      block.position.set(x, 0.6, z);
+      const block = new THREE.Mesh(getGeometry("placed-block", () => new THREE.BoxGeometry(2, 0.16, 2)), getMaterial("placed-block", 0x9b653b));
+      block.position.set(x, 0.42, z);
       scene.add(block);
       blockMeshes.push(block);
     }
@@ -1410,7 +1425,7 @@
           const angle = (bc / Math.max(1, Object.keys(players).length)) * Math.PI * 2;
           const bx = MAP.enemy.x + Math.cos(angle) * 3;
           const bz = MAP.enemy.z + Math.sin(angle) * 3;
-          gameState.players[id] = { id, team: "red", x: bx, z: bz, dir: "left", facingX: -1, facingZ: 0, isMe: false, skin: players[id].skin, name: players[id].username, hp: MAX_PLAYER_HP, respawnTimer: 0, invulnerabilityTimer: 0, swingTimer: 0, blocks: 0, isBot: true, vx: -1.5, vz: 0 };
+          gameState.players[id] = { id, team: "red", x: bx, z: bz, dir: "left", facingX: -1, facingZ: 0, isMe: false, skin: players[id].skin, name: players[id].username, hp: MAX_PLAYER_HP, respawnTimer: 0, invulnerabilityTimer: 0, swingTimer: 0, blocks: 0, isBot: true, botRole: bc === 0 ? "raider" : bc === 1 ? "scout" : "guard" };
           bc++;
         }
       }
@@ -1556,8 +1571,8 @@
           const forward = getCameraForward();
           const inputForward = -moveZ;
           const inputRight = moveX;
-          moveX = inputForward * forward.x + inputRight * forward.z;
-          moveZ = inputForward * forward.z - inputRight * forward.x;
+          moveX = inputForward * forward.x - inputRight * forward.z;
+          moveZ = inputForward * forward.z + inputRight * forward.x;
         }
         if (keys[" "]) isAttacking = true;
         if (keys["f"] && !keys._placeWasDown) {
@@ -1579,8 +1594,13 @@
         const boostStep = me.boostTimer > 0 ? me.boostDirection * PLAYER_SPEED * 1.6 * dt : 0;
         const nextX = me.x + moveX * PLAYER_SPEED * dt + boostStep;
         const nextZ = me.z + moveZ * PLAYER_SPEED * dt;
-        if (isSafe3D(nextX, me.z)) me.x = nextX;
-        if (isSafe3D(me.x, nextZ)) me.z = nextZ;
+        if (isSafe3D(nextX, nextZ)) {
+          me.x = nextX;
+          me.z = nextZ;
+        } else {
+          if (isSafe3D(nextX, me.z)) me.x = nextX;
+          if (isSafe3D(me.x, nextZ)) me.z = nextZ;
+        }
         if (moveX || moveZ) {
           me.facingX = moveX;
           me.facingZ = moveZ;
@@ -1606,29 +1626,37 @@
         const p = gameState.players[id]; if (id === myPeerId || p.hp <= 0) continue;
         if (p.isBot && isHost) {
             const playerDistance = Math.hypot(me.x - p.x, me.z - p.z);
-            const bedX = MAP.spawn.x + 5.5;
-            const bedDistance = Math.hypot(bedX - p.x, MAP.spawn.z - p.z);
-            const target = playerDistance < 12 ? me : { x: bedX, z: MAP.spawn.z };
+            const blueBed = { x: MAP.spawn.x + 5.5, z: MAP.spawn.z };
+            const redBed = { x: MAP.enemy.x - 5.5, z: MAP.enemy.z };
+            const bedDistance = Math.hypot(blueBed.x - p.x, blueBed.z - p.z);
+            const shouldFight = playerDistance < (p.botRole === "guard" ? 16 : 24);
+            const target = shouldFight
+              ? me
+              : p.botRole === "guard"
+                ? redBed
+                : p.botRole === "scout"
+                  ? MAP.mid
+                  : blueBed;
             const dx = target.x - p.x, dz = target.z - p.z;
             const dist = Math.hypot(dx, dz);
-            if (dist > 0.01 && dist < 40) {
-                const stepX = (dx / dist) * 3 * dt;
-                const stepZ = (dz / dist) * 3 * dt;
-                if (isSafe3D(p.x + stepX, p.z)) p.x += stepX;
-                if (isSafe3D(p.x, p.z + stepZ)) p.z += stepZ;
-                if (Math.abs(stepX) > Math.abs(stepZ)) {
-                  p.facingX = Math.sign(stepX);
-                  p.facingZ = 0;
-                } else if (stepZ !== 0) {
-                  p.facingX = 0;
-                  p.facingZ = Math.sign(stepZ);
+            if (dist > 0.01 && dist < 60) {
+                const stepX = (dx / dist) * 4.5 * dt;
+                const stepZ = (dz / dist) * 4.5 * dt;
+                if (isSafe3D(p.x + stepX, p.z + stepZ)) {
+                  p.x += stepX;
+                  p.z += stepZ;
+                } else {
+                  if (isSafe3D(p.x + stepX, p.z)) p.x += stepX;
+                  if (isSafe3D(p.x, p.z + stepZ)) p.z += stepZ;
                 }
-                if (playerDistance < 2 && p.swingTimer <= 0) {
-                  p.swingTimer = 0.5;
-                  if (me.invulnerabilityTimer <= 0 && me.respawnTimer <= 0 && window.WarsBedWars) window.WarsBedWars.damagePlayer(p, me, 10);
+                p.facingX = dx / dist;
+                p.facingZ = dz / dist;
+                if (playerDistance < 3.2 && p.swingTimer <= 0) {
+                  p.swingTimer = 0.75;
+                  if (me.invulnerabilityTimer <= 0 && me.respawnTimer <= 0 && window.WarsBedWars) window.WarsBedWars.damagePlayer(p, me, 12);
                 }
             }
-            if (bedDistance < 2.2 && p.swingTimer <= 0 && gameState.bedHp > 0) {
+            if (bedDistance < 2.5 && p.swingTimer <= 0 && gameState.bedHp > 0) {
               p.swingTimer = 0.5;
               if (window.WarsBedWars) window.WarsBedWars.damageBed("blue", 10, id);
             }
@@ -1639,12 +1667,18 @@
     }
 
     function isSafe3D(x, z) {
-      if (Math.hypot(x - MAP.spawn.x, z - MAP.spawn.z) < MAP.islandRadius - 0.6) return true;
-      if (Math.hypot(x - MAP.enemy.x, z - MAP.enemy.z) < MAP.islandRadius - 0.6) return true;
-      if (Math.hypot(x - MAP.mid.x, z - MAP.mid.z) < MAP.midRadius - 0.6) return true;
+      for (const island of getPlayableIslands()) {
+        if (Math.hypot(x - island.x, z - island.z) < island.radius - 0.6) return true;
+      }
       const bounds = getBridgeBounds();
       for (const bridge of MAP.bridges) {
-        if (x >= bounds.startX && x <= bounds.endX && Math.abs(z - bridge.z) < bridge.width / 2 - 0.25) return true;
+        if (bridge.axis === "z") {
+          const startZ = Math.min(bridge.startZ, bridge.endZ) - 0.15;
+          const endZ = Math.max(bridge.startZ, bridge.endZ) + 0.15;
+          if (z >= startZ && z <= endZ && Math.abs(x - bridge.x) <= bridge.width / 2 - 0.1) return true;
+        } else if (x >= bounds.startX - 0.15 && x <= bounds.endX + 0.15 && Math.abs(z - bridge.z) <= bridge.width / 2 - 0.1) {
+          return true;
+        }
       }
       for (const b of gameState.blocks) { if (Math.hypot(x - b.x, z - b.z) < 1.2) return true; }
       return false;
@@ -1654,8 +1688,13 @@
       if(isShopOpen || isSettingsOpen || isGameOver) return;
       const me = gameState.players[myPeerId]; if(!me || !me.blocks || me.blocks <= 0) return;
       
-      const bx = Math.round(me.x + (me.facingX || 0) * 1.7);
-      const bz = Math.round(me.z + (me.facingZ || 1) * 1.7);
+      let facingX = Number.isFinite(me.facingX) ? me.facingX : 0;
+      let facingZ = Number.isFinite(me.facingZ) ? me.facingZ : 1;
+      const facingLength = Math.hypot(facingX, facingZ) || 1;
+      facingX /= facingLength;
+      facingZ /= facingLength;
+      const bx = Math.round(me.x + facingX * 1.7);
+      const bz = Math.round(me.z + facingZ * 1.7);
       if (!isSafe3D(bx, bz) && !gameState.blocks.some(b => b.x === bx && b.z === bz)) {
           me.blocks--; document.getElementById("hud-blocks").textContent=me.blocks;
           gameState.blocks.push({x: bx, z: bz});
@@ -1711,9 +1750,16 @@
       const width = window.innerWidth;
       const height = window.innerHeight;
       const arena = ARENAS[matchArenaId];
-      const worldWidth = MAP.enemy.x - MAP.spawn.x + MAP.islandRadius * 2 + 4;
-      const bridgeDepth = MAP.bridges.reduce((depth, bridge) => Math.max(depth, Math.abs(bridge.z) + bridge.width / 2), 0);
-      const worldDepth = Math.max(MAP.islandRadius * 2 + 4, bridgeDepth * 2 + 6, 24);
+      const islands = getPlayableIslands();
+      const worldWidth = Math.max(...islands.map(island => Math.abs(island.x) + island.radius)) * 2 + 4;
+      const islandDepth = Math.max(...islands.map(island => Math.abs(island.z) + island.radius));
+      const bridgeDepth = MAP.bridges.reduce((depth, bridge) => Math.max(
+        depth,
+        bridge.axis === "z"
+          ? Math.max(Math.abs(bridge.startZ), Math.abs(bridge.endZ))
+          : Math.abs(bridge.z) + bridge.width / 2
+      ), 0);
+      const worldDepth = Math.max(islandDepth, bridgeDepth, 12) * 2 + 4;
       const scale = Math.min((width - 56) / worldWidth, (height - 180) / worldDepth);
       const centerX = width / 2;
       const centerY = height / 2;
@@ -1736,11 +1782,25 @@
       drawIsland2D(MAP.spawn.x, MAP.spawn.z, MAP.islandRadius, scale, point, 0);
       drawIsland2D(MAP.enemy.x, MAP.enemy.z, MAP.islandRadius, scale, point, 1);
       drawIsland2D(MAP.mid.x, MAP.mid.z, MAP.midRadius, scale, point, 2);
+      (MAP.extraIslands || []).forEach((island, index) => drawIsland2D(island.x, island.z, island.radius, scale, point, index + 3));
 
       const bridgeBounds = getBridgeBounds();
       for (const bridge of MAP.bridges) {
-        const top = point(bridgeBounds.startX, bridge.z - bridge.width / 2);
-        const bottom = point(bridgeBounds.endX, bridge.z + bridge.width / 2);
+        const bounds = bridge.axis === "z"
+          ? {
+              startX: bridge.x - bridge.width / 2,
+              endX: bridge.x + bridge.width / 2,
+              startZ: Math.min(bridge.startZ, bridge.endZ),
+              endZ: Math.max(bridge.startZ, bridge.endZ)
+            }
+          : {
+              startX: bridgeBounds.startX,
+              endX: bridgeBounds.endX,
+              startZ: bridge.z - bridge.width / 2,
+              endZ: bridge.z + bridge.width / 2
+            };
+        const top = point(bounds.startX, bounds.startZ);
+        const bottom = point(bounds.endX, bounds.endZ);
         ctx.fillStyle = arena.canvasBridge;
         ctx.fillRect(top.x, top.y, bottom.x - top.x, bottom.y - top.y);
         ctx.strokeStyle = "#241b17";
@@ -1748,13 +1808,24 @@
         ctx.strokeRect(top.x, top.y, bottom.x - top.x, bottom.y - top.y);
         ctx.strokeStyle = arena.boostCss;
         ctx.lineWidth = Math.max(2, scale * 0.11);
-        for (let x = bridgeBounds.startX + 0.8; x < bridgeBounds.endX; x += 1.4) {
-          const plankTop = point(x, bridge.z - bridge.width / 2 + 0.15);
-          const plankBottom = point(x, bridge.z + bridge.width / 2 - 0.15);
-          ctx.beginPath();
-          ctx.moveTo(plankTop.x, plankTop.y);
-          ctx.lineTo(plankBottom.x, plankBottom.y);
-          ctx.stroke();
+        if (bridge.axis === "z") {
+          for (let z = bounds.startZ + 0.8; z < bounds.endZ; z += 1.4) {
+            const plankTop = point(bounds.startX + 0.15, z);
+            const plankBottom = point(bounds.endX - 0.15, z);
+            ctx.beginPath();
+            ctx.moveTo(plankTop.x, plankTop.y);
+            ctx.lineTo(plankBottom.x, plankBottom.y);
+            ctx.stroke();
+          }
+        } else {
+          for (let x = bounds.startX + 0.8; x < bounds.endX; x += 1.4) {
+            const plankTop = point(x, bounds.startZ + 0.15);
+            const plankBottom = point(x, bounds.endZ - 0.15);
+            ctx.beginPath();
+            ctx.moveTo(plankTop.x, plankTop.y);
+            ctx.lineTo(plankBottom.x, plankBottom.y);
+            ctx.stroke();
+          }
         }
       }
       for (const pad of getBoostPads()) drawBoostPad2D(pad, scale, point, arena.boostCss);

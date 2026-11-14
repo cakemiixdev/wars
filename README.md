@@ -13,9 +13,9 @@ Music is loaded only when enabled and uses the compressed `assets/music.ogg` sou
 - Move: `WASD` or arrow keys
 - Attack: `Space`
 - Shop: `E`
-- Place a block or open the center chest: `F`
+- Place a flat bridge tile or open the center chest: `F`
 - Choose **2D Stickmen** or **3D Island Arena** in the lobby or Gameplay settings
-- In the lobby, choose one of three 3D arenas: **Sky Garden**, **Ember Rift**, or **Frostwood Peaks**. The room host selects the map.
+- In the lobby, choose one of three 3D arenas: **Sky Garden**, **Ember Rift**, or **Frostwood Peaks**. Each has a wider main bridge, a larger center for fights, and two side platforms; Frostwood keeps its twin main ice paths. The room host selects the map.
 - Run over the glowing rings near your island bridge for a short speed boost
 - Your base forge generates 8 tokens per second. Loot the middle chest for 80 tokens and an emerald.
 - Collect emeralds from the center generator; buy an Emerald Blade or Bed Plating in the shop.
@@ -23,7 +23,7 @@ Music is loaded only when enabled and uses the compressed `assets/music.ogg` sou
 - After a bot match, choose **Rematch** for a quick replay with the same arena and bots.
 - Open the quick guide: click the `?` button or press `?`
 
-3D fighters are animated stick figures with spherical heads, articulated limbs, and your selected skin colors. Each arena has its own terrain, scenery, bridge layout, and boost pads. Player health is displayed during matches; a knockout triggers a short respawn and brief spawn shield. Matches and token income pause when the game tab is hidden.
+3D fighters are animated stick figures with spherical heads, articulated limbs, and your selected skin colors. Each arena has its own terrain, scenery, connected side routes, and boost pads. Player health is displayed during matches; a knockout triggers a short respawn and brief spawn shield. Matches and token income pause when the game tab is hidden.
 
 Touch devices have a left joystick for camera-relative movement and a separate right joystick for looking around in 3D, plus action buttons. The camera resets when switching camera presets, and the look joystick is hidden in 2D mode.
 

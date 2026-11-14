@@ -242,7 +242,7 @@
     if (now - (state.lastAttackAt[playerId] || 0) < 220) return;
     state.lastAttackAt[playerId] = now;
     const damage = attacker.hasEmeraldBlade ? 40 : attacker.hasAxe ? 35 : attacker.hasSword ? 20 : 10;
-    const reach = attacker.hasAxe ? 3.5 : 3;
+    const reach = attacker.hasAxe ? 4.2 : attacker.hasSword || attacker.hasEmeraldBlade ? 3.6 : 3.3;
     let nearest = null;
     let nearestDistance = reach;
     for (const id in gameState.players) {
@@ -367,18 +367,18 @@
       roughness: 0.35,
       metalness: 0.12
     });
-    const base = new THREE.Mesh(new THREE.CylinderGeometry(0.85, 1, 0.28, 8), baseMaterial);
-    base.position.y = 0.15;
+    const base = new THREE.Mesh(new THREE.CylinderGeometry(1.35, 1.5, 0.16, 12), baseMaterial);
+    base.position.y = 0.08;
     group.add(base);
-    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.65, 0.08, 6, 18), glowMaterial);
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(1.08, 0.07, 6, 24), glowMaterial);
     ring.rotation.x = Math.PI / 2;
-    ring.position.y = 0.42;
+    ring.position.y = 0.17;
     group.add(ring);
     const core = new THREE.Mesh(
-      isEmerald ? new THREE.OctahedronGeometry(0.42) : new THREE.BoxGeometry(0.5, 0.5, 0.5),
+      isEmerald ? new THREE.OctahedronGeometry(0.34) : new THREE.BoxGeometry(0.38, 0.38, 0.38),
       glowMaterial
     );
-    core.position.y = 0.9;
+    core.position.y = 0.52;
     group.add(core);
     group.position.set(x, 0.5, z);
     group.userData.core = core;
